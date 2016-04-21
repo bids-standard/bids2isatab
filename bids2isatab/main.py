@@ -188,5 +188,5 @@ def main():
     print("Metadata extraction complete.")
 
 
-if if __name__ == '__main__':
+if __name__ == '__main__':
     main()
