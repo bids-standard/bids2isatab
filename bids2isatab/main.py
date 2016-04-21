@@ -64,7 +64,7 @@ def get_metadata_for_nifti(bids_root, path):
     return merged_param_dict
 
 
-def main(args, loglevel):
+def run(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
 
     subject_ids = []
@@ -147,11 +147,6 @@ def main(args, loglevel):
         fp.write(investigation_template)
 
 
-
-
-
-# Standard boilerplate to call the main() function to begin
-# the program.
 def main():
     class MyParser(argparse.ArgumentParser):
         def error(self, message):
