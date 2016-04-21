@@ -8,6 +8,7 @@ import logging
 from collections import OrderedDict
 from glob import glob
 import os
+import sys
 
 import nibabel
 import json
@@ -152,7 +153,13 @@ def main(args, loglevel):
 # Standard boilerplate to call the main() function to begin
 # the program.
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
+    class MyParser(argparse.ArgumentParser):
+        def error(self, message):
+            sys.stderr.write('error: %s\n' % message)
+            self.print_help()
+            sys.exit(2)
+
+    parser = argparse.MyParser(
         description="Does a thing to some stuff.",
         epilog="As an alternative to the commandline, params can be placed in a file, one per line, and specified on the"
                " commandline like '%(prog)s @params.conf'.",
