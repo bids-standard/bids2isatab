@@ -1,0 +1,27 @@
+Sample Name	Raw Data File	Type of MRI assay	Resolution value	Resolution unit	TaskName	RepetitionTime
+06	/sub-06/func/sub-06_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+06	/sub-06/anat/sub-06_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+13	/sub-13/func/sub-13_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+13	/sub-13/anat/sub-13_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+11	/sub-11/func/sub-11_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+11	/sub-11/anat/sub-11_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+02	/sub-02/func/sub-02_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+02	/sub-02/anat/sub-02_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+05	/sub-05/func/sub-05_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+05	/sub-05/anat/sub-05_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+08	/sub-08/func/sub-08_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+08	/sub-08/anat/sub-08_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+07	/sub-07/func/sub-07_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+07	/sub-07/anat/sub-07_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+10	/sub-10/func/sub-10_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+10	/sub-10/anat/sub-10_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+12	/sub-12/func/sub-12_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+12	/sub-12/anat/sub-12_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+03	/sub-03/func/sub-03_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+03	/sub-03/anat/sub-03_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+04	/sub-04/func/sub-04_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+04	/sub-04/anat/sub-04_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+09	/sub-09/func/sub-09_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+09	/sub-09/anat/sub-09_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		
+01	/sub-01/func/sub-01_task-rhymejudgment_bold.nii.gz	bold	12.5x12.5x16.0	mm	rhyme judgment	2.0
+01	/sub-01/anat/sub-01_T1w.nii.gz	T1w	4.0x5.33333x5.33333	mm		

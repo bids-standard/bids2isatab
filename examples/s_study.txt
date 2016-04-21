@@ -1,0 +1,14 @@
+Source Name	Characteristics[organism]	Term Source REF	Term Accession Number	Characteristics[organism part]	Protocol REF	Sample Name	Comment[sex]	Comment[age]
+01	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	01	M	25
+02	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	02	M	18
+03	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	03	F	22
+04	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	04	F	25
+05	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	05	M	22
+06	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	06	M	38
+07	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	07	M	36
+08	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	08	M	19
+09	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	09	M	20
+10	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	10	F	19
+11	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	11	F	21
+12	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	12	M	19
+13	Homo sapiens	NCBITAXON	NCBITaxon:9606	brain	Participants	13	F	29
