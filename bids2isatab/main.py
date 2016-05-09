@@ -85,7 +85,7 @@ def run(args, loglevel):
     participants_file = os.path.join(args.bids_directory, "participants.tsv")
     if os.path.exists(participants_file):
         participants_df = pd.read_csv(participants_file, sep="\t")
-        participants_df.rename(columns={'subject_id': "Sample Name"}, inplace=True)
+        participants_df.rename(columns={'participant_id': "Sample Name"}, inplace=True)
         participants_df["Sample Name"] = [s[4:] for s in list(participants_df["Sample Name"])]
         for col in participants_df.columns.tolist():
             if col != "Sample Name":
