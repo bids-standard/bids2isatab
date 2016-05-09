@@ -21,6 +21,6 @@ Extract ISA-Tab compatible metadata from Brain Imaging Data Structure compatible
       -h, --help        show this help message and exit
       -v, --verbose     increase output verbosity
       
-      ## Example outputs
-      
-      See /examples
+
+## Example outputs
+See [/examples](/examples)
