@@ -75,8 +75,8 @@ Study Assay File Name	a_assay.txt
 STUDY PROTOCOLS
 Study Protocol Name	Magnetic Resonance Imaging
 Study Protocol Type	nuclear magnetic resonance assay
-Study Protocol Type Term Accession Number	NCIT:C16809
-Study Protocol Type Term Source REF	NCIT
+Study Protocol Type Term Accession Number	OBI:0000182
+Study Protocol Type Term Source REF	OBI
 Study Protocol Description
 Study Protocol URI
 Study Protocol Version
