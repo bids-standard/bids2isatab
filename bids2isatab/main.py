@@ -102,10 +102,12 @@ def run(args, loglevel):
     resolutions_units = []
     rts = []
     rts_units = []
+    assay_names = []
     other_fields = []
     for file in glob(os.path.join(args.bids_directory, "sub-*", "*", "sub-*.nii.gz")) + \
             glob(os.path.join(args.bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*.nii.gz")):
         sample_names.append(os.path.split(file)[-1].split("_")[0][4:])
+        assay_names.append(os.path.split(file)[-1].split(".")[0])
         raw_file.append(file[len(args.bids_directory):])
         types.append(file.split("_")[-1].split(".")[0])
         header = nibabel.load(file).get_header()
@@ -120,22 +122,24 @@ def run(args, loglevel):
         other_fields.append(get_metadata_for_nifti(args.bids_directory, file))
 
     assay_dict["Sample Name"] = sample_names
+    assay_dict["Assay Name"] = assay_names
+    assay_dict["Protocol REF"] = "Magnetic Resonance Imaging"
     assay_dict["Raw Data File"] = raw_file
     assay_dict["Type of MRI assay"] = types
-    assay_dict["Resolution value"] = resolutions
-    assay_dict["Resolution unit"] = resolutions_units
+    assay_dict["Parameter Value[resolution]"] = resolutions
+    assay_dict["Unit"] = resolutions_units
 
     new_fields = set()
     for d in other_fields:
         new_fields = new_fields.union(set(d.keys()))
 
     for field in new_fields:
-        assay_dict[field] = []
+        assay_dict["Parameter Value[%s]"%field] = []
         for d in other_fields:
             if field in d:
-                assay_dict[field].append(d[field])
+                assay_dict["Parameter Value[%s]"%field].append(d[field])
             else:
-                assay_dict[field].append(None)
+                assay_dict["Parameter Value[%s]"%field].append(None)
 
     df = pd.DataFrame(assay_dict)
     df.to_csv(os.path.join(args.output_directory, "a_assay.txt"), sep="\t", index=False)

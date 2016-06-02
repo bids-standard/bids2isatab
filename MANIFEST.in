@@ -1,1 +1,14 @@
 include bids2isatab/i_investigation_template.txt
+
+
+    usage: bids2isatab [-h] [-v] BIDS_DIRECTORY OUTPUT_DIRECTORY
+
+    BIDS to ISA-Tab converter.
+
+    positional arguments:
+      BIDS_DIRECTORY    Location of the root of your BIDS compatible directory
+      OUTPUT_DIRECTORY  Directory where ISA-TAB files will be stored
+
+    optional arguments:
+      -h, --help        show this help message and exit
+      -v, --verbose     increase output verbosity
