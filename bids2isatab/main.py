@@ -78,7 +78,7 @@ def run(args, loglevel):
     study_dict["Term Source REF"] = "NCBITAXON"
     study_dict["Term Accession Number"] = "NCBITaxon:9606"
     study_dict["Characteristics[organism part]"] = "brain"
-    study_dict["Protocol REF"] = "Participants"
+    study_dict["Protocol REF"] = "Participant recruitment"
     study_dict["Sample Name"] = subject_ids
     df = pd.DataFrame(study_dict)
 
@@ -122,11 +122,11 @@ def run(args, loglevel):
         other_fields.append(get_metadata_for_nifti(args.bids_directory, file))
 
     assay_dict["Sample Name"] = sample_names
-    assay_dict["Assay Name"] = assay_names
     assay_dict["Protocol REF"] = "Magnetic Resonance Imaging"
+    assay_dict["Assay Name"] = assay_names
     assay_dict["Raw Data File"] = raw_file
-    assay_dict["Type of MRI assay"] = types
-    assay_dict["Parameter Value[resolution]"] = resolutions
+    assay_dict["Comment[Modality]"] = types
+    assay_dict["Comment[Resolution]"] = resolutions
     assay_dict["Unit"] = resolutions_units
 
     new_fields = set()
@@ -134,12 +134,13 @@ def run(args, loglevel):
         new_fields = new_fields.union(set(d.keys()))
 
     for field in new_fields:
-        assay_dict["Parameter Value[%s]"%field] = []
+        assay_dict["Comment[%s]"%field] = []
+
         for d in other_fields:
             if field in d:
-                assay_dict["Parameter Value[%s]"%field].append(d[field])
+                assay_dict["Comment[%s]"%field].append(d[field])
             else:
-                assay_dict["Parameter Value[%s]"%field].append(None)
+                assay_dict["Comment[%s]"%field].append(None)
 
     df = pd.DataFrame(assay_dict)
     df.to_csv(os.path.join(args.output_directory, "a_assay.txt"), sep="\t", index=False)

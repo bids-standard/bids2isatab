@@ -1,14 +1,14 @@
-Sample Name	Assay Name	Protocol REF	Raw Data File	Type of MRI assay	Parameter Value[resolution]	Unit	Parameter Value[TaskName]	Parameter Value[RepetitionTime]
-01	sub-01_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-01/func/sub-01_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-02	sub-02_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-02/func/sub-02_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-03	sub-03_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-03/func/sub-03_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-04	sub-04_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-04/func/sub-04_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-05	sub-05_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-05/func/sub-05_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-06	sub-06_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-06/func/sub-06_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-07	sub-07_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-07/func/sub-07_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-08	sub-08_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-08/func/sub-08_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-09	sub-09_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-09/func/sub-09_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-10	sub-10_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-10/func/sub-10_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-11	sub-11_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-11/func/sub-11_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-12	sub-12_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-12/func/sub-12_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
-13	sub-13_task-rhymejudgment_bold	Magnetic Resonance Imaging	/sub-13/func/sub-13_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+Sample Name	Protocol REF	Assay Name	Raw Data File	Comment[Modality]	Comment[Resolution]	Unit	Comment[TaskName]	Comment[RepetitionTime]
+01	Magnetic Resonance Imaging	sub-01_task-rhymejudgment_bold	/sub-01/func/sub-01_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+02	Magnetic Resonance Imaging	sub-02_task-rhymejudgment_bold	/sub-02/func/sub-02_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+03	Magnetic Resonance Imaging	sub-03_task-rhymejudgment_bold	/sub-03/func/sub-03_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+04	Magnetic Resonance Imaging	sub-04_task-rhymejudgment_bold	/sub-04/func/sub-04_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+05	Magnetic Resonance Imaging	sub-05_task-rhymejudgment_bold	/sub-05/func/sub-05_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+06	Magnetic Resonance Imaging	sub-06_task-rhymejudgment_bold	/sub-06/func/sub-06_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+07	Magnetic Resonance Imaging	sub-07_task-rhymejudgment_bold	/sub-07/func/sub-07_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+08	Magnetic Resonance Imaging	sub-08_task-rhymejudgment_bold	/sub-08/func/sub-08_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+09	Magnetic Resonance Imaging	sub-09_task-rhymejudgment_bold	/sub-09/func/sub-09_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+10	Magnetic Resonance Imaging	sub-10_task-rhymejudgment_bold	/sub-10/func/sub-10_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+11	Magnetic Resonance Imaging	sub-11_task-rhymejudgment_bold	/sub-11/func/sub-11_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+12	Magnetic Resonance Imaging	sub-12_task-rhymejudgment_bold	/sub-12/func/sub-12_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
+13	Magnetic Resonance Imaging	sub-13_task-rhymejudgment_bold	/sub-13/func/sub-13_task-rhymejudgment_bold.nii.gz	bold	3.125x3.125x4.0	mm	rhyme judgment	2.0
