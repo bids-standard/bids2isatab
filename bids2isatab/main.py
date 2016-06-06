@@ -104,6 +104,8 @@ def run(args, loglevel):
     rts_units = []
     assay_names = []
     other_fields = []
+    mri_par_names = []
+
     for file in glob(os.path.join(args.bids_directory, "sub-*", "*", "sub-*.nii.gz")) + \
             glob(os.path.join(args.bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*.nii.gz")):
         sample_names.append(os.path.split(file)[-1].split("_")[0][4:])
@@ -123,10 +125,10 @@ def run(args, loglevel):
 
     assay_dict["Sample Name"] = sample_names
     assay_dict["Protocol REF"] = "Magnetic Resonance Imaging"
-    assay_dict["Assay Name"] = assay_names
-    assay_dict["Raw Data File"] = raw_file
-    assay_dict["Comment[Modality]"] = types
-    assay_dict["Comment[Resolution]"] = resolutions
+    assay_dict["Parameter Value[Modality]"] = types
+    mri_par_names.append("Modality")
+    assay_dict["Parameter Value[Resolution]"] = resolutions
+    mri_par_names.append("Resolution")
     assay_dict["Unit"] = resolutions_units
 
     new_fields = set()
@@ -134,13 +136,16 @@ def run(args, loglevel):
         new_fields = new_fields.union(set(d.keys()))
 
     for field in new_fields:
-        assay_dict["Comment[%s]"%field] = []
+        assay_dict["Parameter Value[%s]"%field] = []
 
         for d in other_fields:
             if field in d:
-                assay_dict["Comment[%s]"%field].append(d[field])
+                assay_dict["Parameter Value[%s]"%field].append(d[field])
             else:
-                assay_dict["Comment[%s]"%field].append(None)
+                assay_dict["Parameter Value[%s]"%field].append(None)
+
+    assay_dict["Assay Name"] = assay_names
+    assay_dict["Raw Data File"] = raw_file
 
     df = pd.DataFrame(assay_dict)
     df.to_csv(os.path.join(args.output_directory, "a_assay.txt"), sep="\t", index=False)
@@ -148,6 +153,18 @@ def run(args, loglevel):
     this_path = os.path.join(os.path.realpath(__file__))
     template_path = os.path.join(*(os.path.split(this_path)[:-1] + ("i_investigation_template.txt", )))
     investigation_template = open(template_path).read()
+
+    title = os.path.split(args.bids_directory)[-1]
+
+    if os.path.exists(os.path.join(args.bids_directory, "dataset_description.json")):
+        with open(os.path.join(args.bids_directory, "dataset_description.json"), "r") as description_dict_fp:
+            description_dict = json.load(description_dict_fp)
+            if "Name" in description_dict:
+                title = description_dict["Name"]
+
+    investigation_template = investigation_template.replace("[TODO: TITLE]", title)
+    investigation_template = investigation_template.replace("[TODO: MRI_PAR_NAMES]", ";".join(mri_par_names))
+
     with open(os.path.join(args.output_directory, "i_investigation.txt"), "w") as fp:
         fp.write(investigation_template)
 

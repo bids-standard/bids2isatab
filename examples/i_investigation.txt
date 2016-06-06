@@ -31,8 +31,8 @@ Investigation Person Roles
 Investigation Person Roles Term Accession Number
 Investigation Person Roles Term Source REF
 STUDY
-Study Identifier
-Study Title
+Study Identifier	[TODO: IDENTIFIER]
+Study Title	Rhyme judgment
 Study Submission Date
 Study Public Release Date
 Study Description
@@ -70,23 +70,23 @@ Study Assay Measurement Type Term Source REF	OBI
 Study Assay Technology Type	MRI Scanner
 Study Assay Technology Type Term Accession Number	ERO:MRI_Scanner
 Study Assay Technology Type Term Source REF	ERO
-Study Assay Technology Platform
+Study Assay Technology Platform	
 Study Assay File Name	a_assay.txt
 STUDY PROTOCOLS
 Study Protocol Name	Participant recruitment	Magnetic Resonance Imaging
 Study Protocol Type	selection	nuclear magnetic resonance assay
 Study Protocol Type Term Accession Number	OBI:0001928	OBI:0000182
 Study Protocol Type Term Source REF	OBI	OBI
-Study Protocol Description
+Study Protocol Description	""	""
 Study Protocol URI	""	""
-Study Protocol Version
-Study Protocol Parameters Name
-Study Protocol Parameters Name Term Accession Number
-Study Protocol Parameters Name Term Source REF
-Study Protocol Components Name
-Study Protocol Components Type
-Study Protocol Components Type Term Accession Number
-Study Protocol Components Type Term Source REF
+Study Protocol Version	""	""
+Study Protocol Parameters Name	""	Modality;Resolution
+Study Protocol Parameters Name Term Accession Number	""	""
+Study Protocol Parameters Name Term Source REF	""	""
+Study Protocol Components Name	""	""
+Study Protocol Components Type	""	""
+Study Protocol Components Type Term Accession Number	""	""
+Study Protocol Components Type Term Source REF	""	""
 STUDY CONTACTS
 Study Person Last Name
 Study Person First Name
