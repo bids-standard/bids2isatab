@@ -63,6 +63,23 @@ def get_metadata_for_nifti(bids_root, path):
 
     return merged_param_dict
 
+def get_chainvalue(chain, src):
+    try:
+        for key in chain:
+            src = src[key]
+        return src
+    except KeyError:
+        return None
+
+def get_keychains(d, dest, prefix):
+    if isinstance(d, dict):
+        for item in d:
+            dest = get_keychains(d[item], dest, prefix + [item])
+    else:
+        if d and not (d == 'UNDEFINED'):
+            # ignore empty stuff
+            dest = dest.union((tuple(prefix),))
+    return dest
 
 def run(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
@@ -137,16 +154,14 @@ def run(args, loglevel):
 
     new_fields = set()
     for d in other_fields:
-        new_fields = new_fields.union(set(d.keys()))
+        new_fields = get_keychains(d, new_fields, [])
 
     for field in new_fields:
-        assay_dict["Parameter Value[%s]"%field] = []
+        column_id = "Parameter Value[%s]" % ':'.join(field)
+        assay_dict[column_id] = []
 
         for d in other_fields:
-            if field in d:
-                assay_dict["Parameter Value[%s]"%field].append(d[field])
-            else:
-                assay_dict["Parameter Value[%s]"%field].append(None)
+            assay_dict[column_id].append(get_chainvalue(field, d))
 
     assay_dict["Assay Name"] = assay_names
     assay_dict["Raw Data File"] = raw_file
