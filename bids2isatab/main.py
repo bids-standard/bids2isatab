@@ -152,6 +152,7 @@ def run(args, loglevel):
     assay_dict["Raw Data File"] = raw_file
 
     df = pd.DataFrame(assay_dict)
+    df = df.sort_values(['Assay Name'])
     df.to_csv(os.path.join(args.output_directory, "a_assay.txt"), sep="\t", index=False)
 
     this_path = os.path.join(os.path.realpath(__file__))
