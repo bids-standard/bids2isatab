@@ -67,6 +67,10 @@ def get_metadata_for_nifti(bids_root, path):
 def run(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
 
+    if not os.path.exists(args.output_directory):
+        logging.info("creating output directory at '{}'".format(args.output_directory))
+        os.makedirs(args.output_directory)
+
     subject_ids = []
     study_dict = OrderedDict()
     for file in glob(os.path.join(args.bids_directory, "sub-*")):
