@@ -167,6 +167,15 @@ def run(args, loglevel):
     assay_dict["Raw Data File"] = raw_file
 
     df = pd.DataFrame(assay_dict)
+    if args.drop_parameter:
+        # filter table
+        for k in df.keys():
+            if k.startswith('Parameter Value['):
+                # get just the ID
+                id_ = k[16:-1]
+                if id_ in args.drop_parameter:
+                    print('dropping %s from output' % k)
+                    df.drop(k, axis=1, inplace=True)
     df = df.sort_values(['Assay Name'])
     df.to_csv(os.path.join(args.output_directory, "a_assay.txt"), sep="\t", index=False)
 
@@ -213,6 +222,14 @@ def main():
         "--verbose",
         help="increase output verbosity",
         action="store_true")
+    parser.add_argument(
+        "-d",
+        "--drop-parameter",
+        help="""list of parameters to ignore when composing the assay table. See
+        the generated table for column IDs to ignore. For example, to remove
+        column 'Parameter Value[time:samples:ContentTime]', specify
+        `--drop-parameter time:samples:ContentTime`.""",
+        nargs='+')
     args = parser.parse_args()
 
     # Setup logging
