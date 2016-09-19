@@ -303,7 +303,9 @@ def _get_mri_assay_df(bids_directory, modality):
             ("Parameter Value[resolution]", 'resolution'),
             ("Parameter Value[4d spacing]", 'rts'),
             ("Parameter Unit[4d spacing]", 'rts_unit')):
-        assay_dict[spec_out] = collector_dict[spec_in]
+        # skip empty
+        if not all([v is None for v in collector_dict[spec_in]]):
+            assay_dict[spec_out] = collector_dict[spec_in]
 
     # record order of parameters; needs to match order in above loop
     mri_par_names = ["Resolution", "Modality"]
