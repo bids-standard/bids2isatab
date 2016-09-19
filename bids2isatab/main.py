@@ -143,7 +143,7 @@ def _describe_mri_file(fpath, bids_directory):
     return info
 
 
-def _get_mri_assay_df(bids_directory, drop_parameter):
+def _get_mri_assay_df(bids_directory):
     assay_dict = OrderedDict()
     assay_dict["Protocol REF"] = "Magnetic Resonance Imaging"
 
@@ -198,15 +198,6 @@ def _get_mri_assay_df(bids_directory, drop_parameter):
         assay_dict[spec_out] = collector_dict[spec_in]
 
     df = pd.DataFrame(assay_dict)
-    if drop_parameter:
-        # filter table
-        for k in df.keys():
-            if k.startswith('Parameter Value['):
-                # get just the ID
-                id_ = k[16:-1]
-                if id_ in drop_parameter:
-                    print('dropping %s from output' % k)
-                    df.drop(k, axis=1, inplace=True)
     df = df.sort_values(['Assay Name'])
     return df, mri_par_names  # TODO investigate necessity for 2nd return value
 
@@ -233,6 +224,18 @@ def _get_investigation_template(bids_directory, mri_par_names):
     return investigation_template
 
 
+def _drop_parameters_from_df(df, drop):
+    if drop:
+        # filter assay table
+        for k in df.keys():
+            if k.startswith('Parameter Value['):
+                # get just the ID
+                id_ = k[16:-1]
+                if id_ in drop:
+                    print('dropping %s from output' % k)
+                    df.drop(k, axis=1, inplace=True)
+
+
 def extract(
         bids_directory,
         output_directory,
@@ -250,8 +253,8 @@ def extract(
         index=False)
 
     # generate: a_assay.txt
-    mri_assay_df, mri_par_names = _get_mri_assay_df(
-        bids_directory, drop_parameter)
+    mri_assay_df, mri_par_names = _get_mri_assay_df(bids_directory)
+    _drop_parameters_from_df(mri_assay_df, drop_parameter)
     mri_assay_df.to_csv(
         opj(output_directory, "a_assay.txt"),
         sep="\t",
