@@ -65,6 +65,7 @@ ontology_term_map = {
     # no associated term, keep but leave untouched
     "Parameter Value[instrument name]": None,
     "Parameter Value[instrument manufacturer]": None,
+    "Parameter Value[instrument software version]": None,
     "Parameter Value[coil type]": None,
     "Parameter Value[sequence]": None,
     'Protocol REF': None,
@@ -88,6 +89,7 @@ ontology_term_map = {
 parameter_name_map = {
     "manufacturermodelname": "instrument name",
     "manufacturer": "instrument manufacturer",
+    "hardcopydevicesoftwareversion": "instrument software version",
     "receivecoilname": "coil type",
     "magneticfieldstrength": "magnetic field strength",
     "receivecoilname": "coil type",
@@ -455,6 +457,7 @@ def _df_with_ontology_info(df):
             # we have a unit column plus terms, insert after matching
             # parameter value column
             after = 'Parameter Value[{}]'.format(col[15:-1])
+            new_columns[0] = ('Unit', new_columns[0][1])
         else:
             # straight append
             after = None
