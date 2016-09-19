@@ -11,6 +11,7 @@ import os
 from os.path import exists, join as opj, split as psplit
 import sys
 
+
 import nibabel
 import json
 import pandas as pd
@@ -42,6 +43,7 @@ ontology_term_map = {
         'r;l': ('ambidextrous', 'PATO', 'PATO:0002204'),
         'l;r': ('ambidextrous', 'PATO', 'PATO:0002204'),
     },
+    'Parameter Value[4d spacing]': None,
     # quantitative information
     "Characteristics[age at scan]": ('UO', 'UO:0000036', 'year'),
     "Parameter Value[resolution]": ('UO', 'UO:0000016', 'millimeter'),
@@ -62,6 +64,15 @@ ontology_term_map = {
     'Parameter Value[modality]': None,
     # not sure if there are terms for SENSE and GRAPPA etc. anywhere
     'Parameter Value[parallel acquisition technique]': None,
+    'Parameter Unit[4d spacing]': {
+        'millimeter': ('millimiter', 'UO', 'UO:0000016'),
+        'second': ('second', 'UO', 'UO:0000010'),
+        'hertz': ('hertz', 'UO', 'UO:0000106'),
+        'hz': ('hertz', 'UO', 'UO:0000106'),
+        'ppm': ('parts per million', 'UO', 'UO:0000109'),
+        'rad': ('radian', 'UO', 'UO:0000123'),
+        'rads': ('radian', 'UO', 'UO:0000123'),
+    },
 # Deal with the following
 #    'Parameter Value[HardcopyDeviceSoftwareVersion]',
 #    'Parameter Value[CogAtlasID]',
@@ -96,7 +107,6 @@ sample_property_name_map = {
 
 
 def get_metadata_for_nifti(bids_root, path):
-
     sidecarJSON = path.replace(".nii.gz", ".json")
 
     pathComponents = psplit(sidecarJSON)
@@ -222,11 +232,40 @@ def _describe_mri_file(fpath, bids_directory):
         return info
 
     header = nibabel.load(fpath).get_header()
-    info['resolution'] = "x".join([str(i) for i in header.get_zooms()[:3]])
-    info['resolutions_units'] = header.get_xyzt_units()[0]
+    spatial_unit = header.get_xyzt_units()[0]
+    # by what factor to multiply by to get to 'mm'
+    if spatial_unit == 'unknown':
+        logging.warn(
+            "unit of spatial resolution for '{}' unkown, assuming 'millimeter'".format(
+                fpath))
+    spatial_unit_conversion = {
+        'unknown': 1,
+        'meter': 1000,
+        'mm': 1,
+        'micron': 0.001}.get(spatial_unit, None)
+    if spatial_unit_conversion is None:
+        raise RuntimeError("unexpected spatial unit code '{}' from NiBabel".format(
+            spatial_unit))
+
+    info['resolution'] = "x".join(
+        [str(i * spatial_unit_conversion) for i in header.get_zooms()[:3]])
     if len(header.get_zooms()) > 3:
-        info['rts'] = header.get_zooms()[3]
-        info['rts_units'] = header.get_xyzt_units()[1]
+        # got a 4th dimension
+        rts_unit = header.get_xyzt_units()[1]
+        if rts_unit == 'unknown':
+            logging.warn(
+                "RTS unit '{}' unkown, assuming 'seconds'".format(
+                    fpath))
+        # normalize to seconds, if possible
+        rts_unit_conversion = {
+            'msec': 0.001,
+            'micron': 0.000001}.get(rts_unit, 1.0)
+        info['rts'] = header.get_zooms()[3] * rts_unit_conversion
+        if rts_unit in ('hz', 'ppm', 'rads'):
+            # not a time unit
+            info['rts_unit'] = rts_unit
+        else:
+            info['rts_unit'] = 'second'
     return info
 
 
@@ -241,9 +280,8 @@ def _get_mri_assay_df(bids_directory, modality):
         'type': [],
         'other_fields': [],
         'resolution': [],
-        'resolutions_units': [],
         'rts': [],
-        'rts_units': [],
+        'rts_unit': [],
     }
 
     fname_suffix = '_{}.nii.gz'.format(modality)
@@ -260,7 +298,8 @@ def _get_mri_assay_df(bids_directory, modality):
             ("Sample Name", "sample_name"),
             ("Parameter Value[modality]", 'type'),
             ("Parameter Value[resolution]", 'resolution'),
-            ("Unit", 'resolutions_units')):
+            ("Parameter Value[4d spacing]", 'rts'),
+            ("Parameter Unit[4d spacing]", 'rts_unit')):
         assay_dict[spec_out] = collector_dict[spec_in]
 
     # record order of parameters; needs to match order in above loop
@@ -352,10 +391,30 @@ def _item_sorter_key(item):
         return 5
     elif name.startswith('Comment['):
         return 10
+    elif name.startswith('Parameter Unit['):
+        # put them at the very end so we discover them last when adding
+        # ontology terms
+        return 99
 
 
 def _sort_df(df):
     return pd.DataFrame.from_items(sorted(df.iteritems(), key=_item_sorter_key))
+
+
+def _extend_column_list(clist, addition, after=None):
+    if after is None:
+        for a in addition:
+            clist.append(a)
+    else:
+        tindex = None
+        for i, c in enumerate(clist):
+            if c[0] == after:
+                tindex = i
+        if tindex is None:
+            raise ValueError("cannot find column '{}' in list".format(after))
+        for a in addition:
+            clist.insert(tindex + 1, a)
+            tindex += 1
 
 
 def _df_with_ontology_info(df):
@@ -364,31 +423,40 @@ def _df_with_ontology_info(df):
         # check if we know something about this column
         term_map = ontology_term_map.get(col, None)
         if term_map is None:
-            items.append((col, val))
-            # we know nothing more
-            continue
+            new_columns = [(col, val)]
         elif isinstance(term_map, tuple):
             # this is quantitative information -> 4-column group
-            items.append((col, val))
-            items.append(('Unit', term_map[2]))
-            items.append(('Term Source REF', term_map[0]))
-            items.append(('Term Accession Number', term_map[1]))
+            new_columns = [(col, val),
+                           ('Unit', term_map[2]),
+                           ('Term Source REF', term_map[0]),
+                           ('Term Accession Number', term_map[1])]
         elif isinstance(term_map, dict):
             # this is qualitative information -> 3-column group
             normvals = []
             refs = []
             acss = []
             for v in val:
-                normval, ref, acs = term_map.get(v.lower(), (None, None, None))
+                normval, ref, acs = term_map.get(
+                    v.lower() if hasattr(v, 'lower') else v,
+                    (None, None, None))
                 normvals.append(normval)
                 refs.append(ref)
                 acss.append(acs)
-                if normval is None:
+                if v and normval is None:
                     logging.warn("unknown value '{}' for '{}' (known: {})".format(
                         v, col, term_map.keys()))
-            items.append((col, normvals))
-            items.append(('Term Source REF', refs))
-            items.append(('Term Accession Number', acss))
+            new_columns = [(col, normvals),
+                           ('Term Source REF', refs),
+                           ('Term Accession Number', acss)]
+        # merged addition with current set of columns
+        if col.startswith('Parameter Unit['):
+            # we have a unit column plus terms, insert after matching
+            # parameter value column
+            after = 'Parameter Value[{}]'.format(col[15:-1])
+        else:
+            # straight append
+            after = None
+        _extend_column_list(items, new_columns, after)
 
     return pd.DataFrame.from_items(items)
 
