@@ -118,57 +118,84 @@ def _get_study_df(bids_directory):
     return df
 
 
+def _describe_mri_file(fpath, bids_directory):
+    fname = psplit(fpath)[-1]
+    info = {
+        'sample_name': fname.split("_")[0][4:],
+        'assay_name': fname.split(".")[0],
+        'raw_filepath': fpath[len(bids_directory):],
+        'type': fname.split("_")[-1].split(".")[0]
+    }
+    info['other_fields'] = get_metadata_for_nifti(bids_directory, fname)
+    if not exists(fpath):
+        # this could happen in the case of a dead symlink in,
+        # e.g., a git-annex repo
+        logging.warn(
+            "cannot extract meta data from '{}'".format(fpath))
+        return info
+
+    header = nibabel.load(fpath).get_header()
+    info['resolution'] = "x".join([str(i) for i in header.get_zooms()[:3]])
+    info['resolutions_units'] = header.get_xyzt_units()[0]
+    if len(header.get_zooms()) > 3:
+        info['rts'] = header.get_zooms()[3]
+        info['rts_units'] = header.get_xyzt_units()[1]
+    return info
+
+
 def _get_mri_assay_df(bids_directory, drop_parameter):
     assay_dict = OrderedDict()
-    sample_names = []
-    raw_file = []
-    types = []
-    resolutions = []
-    resolutions_units = []
-    rts = []
-    rts_units = []
-    assay_names = []
-    other_fields = []
-    mri_par_names = []
-
-    for file in glob(opj(bids_directory, "sub-*", "*", "sub-*.nii.gz")) + \
-            glob(opj(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*.nii.gz")):
-        sample_names.append(psplit(file)[-1].split("_")[0][4:])
-        assay_names.append(psplit(file)[-1].split(".")[0])
-        raw_file.append(file[len(bids_directory):])
-        types.append(file.split("_")[-1].split(".")[0])
-        header = nibabel.load(file).get_header()
-        resolutions.append("x".join([str(i) for i in header.get_zooms()[:3]]))
-        resolutions_units.append(header.get_xyzt_units()[0])
-        if len(header.get_zooms()) > 3:
-            rts.append(header.get_zooms()[3])
-            rts_units.append(header.get_xyzt_units()[1])
-        else:
-            rts.append(None)
-            rts_units.append(None)
-        other_fields.append(get_metadata_for_nifti(bids_directory, file))
-
-    assay_dict["Sample Name"] = sample_names
     assay_dict["Protocol REF"] = "Magnetic Resonance Imaging"
-    assay_dict["Parameter Value[Modality]"] = types
-    mri_par_names.append("Modality")
-    assay_dict["Parameter Value[Resolution]"] = resolutions
-    mri_par_names.append("Resolution")
-    assay_dict["Unit"] = resolutions_units
 
+    collector_dict = {
+        'sample_name': [],
+        'assay_name': [],
+        'raw_filepath': [],
+        'type': [],
+        'other_fields': [],
+        'resolution': [],
+        'resolutions_units': [],
+        'rts': [],
+        'rts_units': [],
+    }
+
+    for fname in glob(opj(bids_directory, "sub-*", "*", "sub-*.nii.gz")) + \
+            glob(opj(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*.nii.gz")):
+        finfo = _describe_mri_file(fname, bids_directory)
+        for spec in collector_dict:
+            fspec = finfo.get(spec, None)
+            collector_dict[spec].append(fspec)
+
+    # map gathered info into assay dict
+    for spec_out, spec_in in (
+            # order is important!!
+            ("Sample Name", "sample_name"),
+            ("Parameter Value[Modality]", 'type'),
+            ("Parameter Value[Resolution]", 'resolution'),
+            ("Unit", 'resolutions_units')):
+        assay_dict[spec_out] = collector_dict[spec_in]
+
+    # record order of parameters; needs to match order in above loop
+    mri_par_names = ["Resolution", "Modality"]
+
+    # determine the union of any additional fields found for any file
     new_fields = set()
-    for d in other_fields:
+    for d in collector_dict['other_fields']:
         new_fields = get_keychains(d, new_fields, [])
-
+    # create a parameter column for each of them
     for field in new_fields:
         column_id = "Parameter Value[%s]" % ':'.join(field)
         assay_dict[column_id] = []
-
-        for d in other_fields:
+        # and fill with content from files
+        for d in collector_dict['other_fields']:
             assay_dict[column_id].append(get_chainvalue(field, d))
 
-    assay_dict["Assay Name"] = assay_names
-    assay_dict["Raw Data File"] = raw_file
+    # TODO: check whether this loop can be merged with the similar one above
+    for spec_out, spec_in in (
+            # order is important!!
+            ("Assay Name", 'assay_name'),
+            ("Raw Data File", 'raw_filepath')):
+        assay_dict[spec_out] = collector_dict[spec_in]
 
     df = pd.DataFrame(assay_dict)
     if drop_parameter:
