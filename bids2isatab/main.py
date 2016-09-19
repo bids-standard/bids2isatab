@@ -8,6 +8,7 @@ import logging
 from collections import OrderedDict
 from glob import glob
 import os
+from os.path import exists, join as opj, split as psplit
 import sys
 
 import nibabel
@@ -19,7 +20,7 @@ def get_metadata_for_nifti(bids_root, path):
 
     sidecarJSON = path.replace(".nii.gz", ".json")
 
-    pathComponents = os.path.split(sidecarJSON)
+    pathComponents = psplit(sidecarJSON)
     filenameComponents = pathComponents[-1].split("_")
     sessionLevelComponentList = []
     subjectLevelComponentList = []
@@ -39,21 +40,21 @@ def get_metadata_for_nifti(bids_root, path):
                 else:
                     topLevelComponentList.append(filenameComponent)
 
-    topLevelJSON = os.path.join(bids_root, "_".join(topLevelComponentList))
+    topLevelJSON = opj(bids_root, "_".join(topLevelComponentList))
     potentialJSONs = [topLevelJSON]
 
-    subjectLevelJSON = os.path.join(bids_root, sub, "_".join(subjectLevelComponentList))
+    subjectLevelJSON = opj(bids_root, sub, "_".join(subjectLevelComponentList))
     potentialJSONs.append(subjectLevelJSON)
 
     if ses:
-        sessionLevelJSON = os.path.join(bids_root, sub, ses, "_".join(sessionLevelComponentList))
+        sessionLevelJSON = opj(bids_root, sub, ses, "_".join(sessionLevelComponentList))
         potentialJSONs.append(sessionLevelJSON)
 
     potentialJSONs.append(sidecarJSON)
 
     merged_param_dict = {}
     for json_file_path in potentialJSONs:
-        if os.path.exists(json_file_path):
+        if exists(json_file_path):
             param_dict = json.load(open(json_file_path, "r"))
             merged_param_dict.update(param_dict)
 
@@ -84,15 +85,15 @@ def extract(
         bids_directory,
         output_directory,
         drop_parameter=None):
-    if not os.path.exists(output_directory):
+    if not exists(output_directory):
         logging.info("creating output directory at '{}'".format(output_directory))
         os.makedirs(output_directory)
 
     subject_ids = []
     study_dict = OrderedDict()
-    for file in glob(os.path.join(bids_directory, "sub-*")):
+    for file in glob(opj(bids_directory, "sub-*")):
         if os.path.isdir(file):
-            subject_ids.append(os.path.split(file)[-1][4:])
+            subject_ids.append(psplit(file)[-1][4:])
     subject_ids.sort()
     study_dict["Source Name"] = subject_ids
     study_dict["Characteristics[organism]"] = "Homo sapiens"
@@ -103,8 +104,8 @@ def extract(
     study_dict["Sample Name"] = subject_ids
     df = pd.DataFrame(study_dict)
 
-    participants_file = os.path.join(bids_directory, "participants.tsv")
-    if os.path.exists(participants_file):
+    participants_file = opj(bids_directory, "participants.tsv")
+    if exists(participants_file):
         participants_df = pd.read_csv(participants_file, sep="\t")
         participants_df.rename(columns={'participant_id': "Sample Name"}, inplace=True)
         participants_df["Sample Name"] = [s[4:] for s in list(participants_df["Sample Name"])]
@@ -113,7 +114,7 @@ def extract(
                 participants_df.rename(columns={col: "Comment[%s]" % col}, inplace=True)
         df = pd.merge(df, participants_df, left_on="Sample Name", right_on="Sample Name")
 
-    df.to_csv(os.path.join(output_directory, "s_study.txt"), sep="\t", index=False)
+    df.to_csv(opj(output_directory, "s_study.txt"), sep="\t", index=False)
 
     assay_dict = OrderedDict()
     sample_names = []
@@ -127,10 +128,10 @@ def extract(
     other_fields = []
     mri_par_names = []
 
-    for file in glob(os.path.join(bids_directory, "sub-*", "*", "sub-*.nii.gz")) + \
-            glob(os.path.join(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*.nii.gz")):
-        sample_names.append(os.path.split(file)[-1].split("_")[0][4:])
-        assay_names.append(os.path.split(file)[-1].split(".")[0])
+    for file in glob(opj(bids_directory, "sub-*", "*", "sub-*.nii.gz")) + \
+            glob(opj(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*.nii.gz")):
+        sample_names.append(psplit(file)[-1].split("_")[0][4:])
+        assay_names.append(psplit(file)[-1].split(".")[0])
         raw_file.append(file[len(bids_directory):])
         types.append(file.split("_")[-1].split(".")[0])
         header = nibabel.load(file).get_header()
@@ -177,16 +178,16 @@ def extract(
                     print('dropping %s from output' % k)
                     df.drop(k, axis=1, inplace=True)
     df = df.sort_values(['Assay Name'])
-    df.to_csv(os.path.join(output_directory, "a_assay.txt"), sep="\t", index=False)
+    df.to_csv(opj(output_directory, "a_assay.txt"), sep="\t", index=False)
 
-    this_path = os.path.join(os.path.realpath(__file__))
-    template_path = os.path.join(*(os.path.split(this_path)[:-1] + ("i_investigation_template.txt", )))
+    this_path = opj(os.path.realpath(__file__))
+    template_path = opj(*(psplit(this_path)[:-1] + ("i_investigation_template.txt", )))
     investigation_template = open(template_path).read()
 
-    title = os.path.split(bids_directory)[-1]
+    title = psplit(bids_directory)[-1]
 
-    if os.path.exists(os.path.join(bids_directory, "dataset_description.json")):
-        with open(os.path.join(bids_directory, "dataset_description.json"), "r") as description_dict_fp:
+    if exists(opj(bids_directory, "dataset_description.json")):
+        with open(opj(bids_directory, "dataset_description.json"), "r") as description_dict_fp:
             description_dict = json.load(description_dict_fp)
             if "Name" in description_dict:
                 title = description_dict["Name"]
@@ -194,7 +195,7 @@ def extract(
     investigation_template = investigation_template.replace("[TODO: TITLE]", title)
     investigation_template = investigation_template.replace("[TODO: MRI_PAR_NAMES]", ";".join(mri_par_names))
 
-    with open(os.path.join(output_directory, "i_investigation.txt"), "w") as fp:
+    with open(opj(output_directory, "i_investigation.txt"), "w") as fp:
         fp.write(investigation_template)
 
 
@@ -245,10 +246,11 @@ def main():
 
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
 
-    extract(args.bids_directory,
+    extract(
+        args.bids_directory,
         args.output_directory,
         args.drop_parameter,
-        )
+    )
     print("Metadata extraction complete.")
 
 
