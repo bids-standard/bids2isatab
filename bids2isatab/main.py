@@ -335,6 +335,29 @@ def _drop_from_df(df, drop):
             df.drop(k, axis=1, inplace=True)
 
 
+def _item_sorter_key(item):
+    # define custom column order for tables
+    name = item[0]
+    if name in ('Sample Name', 'Source Name'):
+        return 0
+    elif name.startswith('Characteristics['):
+        return 1
+    elif name.startswith('Protocol REF'):
+        return 2
+    elif name == 'Assay Name':
+        return 3
+    elif name.startswith('Parameter Value['):
+        return 4
+    elif name == 'Raw Data File':
+        return 5
+    elif name.startswith('Comment['):
+        return 10
+
+
+def _sort_df(df):
+    return pd.DataFrame.from_items(sorted(df.iteritems(), key=_item_sorter_key))
+
+
 def _df_with_ontology_info(df):
     items = []
     for col, val in df.iteritems():
@@ -366,6 +389,7 @@ def _df_with_ontology_info(df):
             items.append((col, normvals))
             items.append(('Term Source REF', refs))
             items.append(('Term Accession Number', acss))
+
     return pd.DataFrame.from_items(items)
 
 
@@ -380,6 +404,7 @@ def extract(
 
     # generate: s_study.txt
     study_df = _get_study_df(bids_directory)
+    study_df = _sort_df(study_df)
     study_df = _df_with_ontology_info(study_df)
     study_df.to_csv(
         opj(output_directory, "s_study.txt"),
@@ -389,6 +414,7 @@ def extract(
     # generate: a_assay.txt
     mri_assay_df, mri_par_names = _get_mri_assay_df(bids_directory)
     _drop_from_df(mri_assay_df, drop_parameter)
+    mri_assay_df = _sort_df(mri_assay_df)
     mri_assay_df = _df_with_ontology_info(mri_assay_df)
     mri_assay_df.to_csv(
         opj(output_directory, "a_assay.txt"),
