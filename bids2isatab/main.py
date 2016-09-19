@@ -77,7 +77,6 @@ ontology_term_map = {
     # not sure if there are terms for SENSE and GRAPPA etc. anywhere
     'Parameter Value[parallel acquisition technique]': None,
 # Deal with the following
-#    'Parameter Value[HardcopyDeviceSoftwareVersion]',
 #    'Parameter Value[CogAtlasID]',
 #    'Parameter Value[CogPOID]',
 }
