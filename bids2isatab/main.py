@@ -16,6 +16,74 @@ import json
 import pandas as pd
 
 
+# map column titles to ontology specs
+# based on this info the appropriate additonal column in the ISATab tables are
+# generated
+ontology_term_map = {
+    # qualitative information
+    "Characteristics[organism]": {
+        'homo sapiens': ('NCBITAXON', 'NCBITaxon:9606'),
+    },
+    "Characteristics[organism part]": {
+        'brain': ('UBERON', 'UBERON:0000955'),
+    },
+    "Characteristics[sex]": {
+        'female': ('PATO', 'PATO:0000383'),
+        'male': ('PATO', 'PATO:0000384'),
+    },
+    "Characteristics[handedness]": {
+        'right':  ('PATO', 'PATO:0002203'),
+        'left': ('PATO', 'PATO:0002202'),
+        'ambidextrous': ('PATO', 'PATO:0002204'),
+    },
+    # quantitative information
+    "Characteristics[age at scan]": ('UO', 'UO:0000036', 'year'),
+    "Parameter Value[resolution]": ('UO', 'UO:0000016', 'millimeter'),
+    "Parameter Value[repetition time]": ('UO', 'UO:0000010', 'second'),
+    "Parameter Value[magnetic field strength]": ('UO', 'UO:0000228', 'tesla'),
+    "Parameter Value[flip angle]": ('UO', 'UO:0000185', 'degree'),
+    "Parameter Value[echo time]": ('UO', 'UO:0000010', 'second'),
+    # no associated term, keep but leave untouched
+    "Parameter Value[instrument name]": None,
+    "Parameter Value[instrument manufacturer]": None,
+    "Parameter Value[coil type]": None,
+    "Parameter Value[sequence]": None,
+    'Protocol REF': None,
+    'Sample Name': None,
+    'Assay Name': None,
+    'Raw Data File': None,
+# Deal with the following
+#    'Parameter Value[Modality]',
+#    'Parameter Value[Resolution]',
+#    'Parameter Value[PhaseEncodingDirection]',
+#    'Parameter Value[HardcopyDeviceSoftwareVersion]',
+#    'Parameter Value[SliceTiming]',
+#    'Parameter Value[ParallelReductionFactorInPlane]',
+#    'Parameter Value[StoryDepthSegmentRatings]',
+#    'Parameter Value[CogAtlasID]',
+#    'Parameter Value[TaskDescription]',
+#    'Parameter Value[SliceEncodingDirection]',
+#    'Parameter Value[ParallelAcquisitionTechnique]',
+#    'Parameter Value[CogPOID]',
+}
+
+# translate from what we find in BIDS or a DICOM dump into the
+# names that ScientificData prefers
+# matching will be done on lower case string
+# add any synonyms or additions as entries toi this dictionary
+parameter_name_map = {
+    "manufacturermodelname": "instrument name",
+    "manufacturer": "instrument manufacturer",
+    "receivecoilname": "coil type",
+    "magneticfieldstrength": "magnetic field strength",
+    "receivecoilname": "coil type",
+    "echotime": "echo time",
+    "repetitiontime": "repetition time",
+    "flipangle": "flip angle",
+    "pulsesequencetype": "sequence",
+}
+
+
 def get_metadata_for_nifti(bids_root, path):
 
     sidecarJSON = path.replace(".nii.gz", ".json")
@@ -184,7 +252,12 @@ def _get_mri_assay_df(bids_directory):
         new_fields = get_keychains(d, new_fields, [])
     # create a parameter column for each of them
     for field in new_fields:
-        column_id = "Parameter Value[%s]" % ':'.join(field)
+        # deal with nested structures by concatenating the field names
+        field_name = ':'.join(field)
+        # normalize parameter names
+        field_name = parameter_name_map.get(field_name.lower(), field_name)
+        # final column ID
+        column_id = "Parameter Value[{}]".format(field_name)
         assay_dict[column_id] = []
         # and fill with content from files
         for d in collector_dict['other_fields']:
@@ -224,16 +297,53 @@ def _get_investigation_template(bids_directory, mri_par_names):
     return investigation_template
 
 
-def _drop_parameters_from_df(df, drop):
-    if drop:
-        # filter assay table
-        for k in df.keys():
-            if k.startswith('Parameter Value['):
-                # get just the ID
-                id_ = k[16:-1]
-                if id_ in drop:
-                    print('dropping %s from output' % k)
-                    df.drop(k, axis=1, inplace=True)
+def _drop_from_df(df, drop):
+    if drop is None:
+        return
+    elif drop == 'unknown':
+        # remove anything that isn't white-listed
+        drop = [k for k in df.keys() if not k in ontology_term_map]
+    elif isinstance(drop, (tuple, list)):
+        # is list of parameter names to drop
+        drop = ['Parameter Value[{}]'.format(d) for d in drop]
+
+    # at this point drop is some iterable
+    # filter assay table and take out matching parameters
+    for k in df.keys():
+        if k in drop:
+            print('dropping %s from output' % k)
+            df.drop(k, axis=1, inplace=True)
+
+
+def _df_with_ontology_info(df):
+    items = []
+    for col, val in df.iteritems():
+        # put each input column in the output unconditionally
+        items.append((col, val))
+        # check if we know something about this column
+        term_map = ontology_term_map.get(col, None)
+        if term_map is None:
+            # we know nothing more
+            continue
+        if isinstance(term_map, tuple):
+            # this is quantitative information -> 4-column group
+            items.append(('Unit', term_map[2]))
+            items.append(('Term Source REF', term_map[0]))
+            items.append(('Term Accession Number', term_map[1]))
+        elif isinstance(term_map, tuple):
+            # this is qualitative information -> 3-column group
+            refs = []
+            acss = []
+            for v in val:
+                ref, acs = term_map.get(v, (None, None))
+                refs.append(ref)
+                acss.append(acs)
+                if ref is None:
+                    logging.warn("unknown value '{}' for '{}' (known: {})".format(
+                        v, col, term_map.keys()))
+            items.append(('Term Source REF', refs))
+            items.append(('Term Accession Number', acss))
+    return pd.DataFrame.from_items(items)
 
 
 def extract(
@@ -247,6 +357,7 @@ def extract(
 
     # generate: s_study.txt
     study_df = _get_study_df(bids_directory)
+    study_df = _df_with_ontology_info(study_df)
     study_df.to_csv(
         opj(output_directory, "s_study.txt"),
         sep="\t",
@@ -254,7 +365,8 @@ def extract(
 
     # generate: a_assay.txt
     mri_assay_df, mri_par_names = _get_mri_assay_df(bids_directory)
-    _drop_parameters_from_df(mri_assay_df, drop_parameter)
+    _drop_from_df(mri_assay_df, drop_parameter)
+    mri_assay_df = _df_with_ontology_info(mri_assay_df)
     mri_assay_df.to_csv(
         opj(output_directory, "a_assay.txt"),
         sep="\t",
@@ -292,13 +404,20 @@ def _get_cmdline_parser():
         help="increase output verbosity",
         action="store_true")
     parser.add_argument(
+        "--keep-unknown",
+        help="""by default only explicitely white-listed parameters and
+        characteristics are considered. This option will force inclusion of
+        any discovered information. See --drop-parameter for additional
+        tuning.""",
+        action='store_true')
+    parser.add_argument(
         "-d",
         "--drop-parameter",
         help="""list of parameters to ignore when composing the assay table. See
         the generated table for column IDs to ignore. For example, to remove
         column 'Parameter Value[time:samples:ContentTime]', specify
-        `--drop-parameter time:samples:ContentTime`.""",
-        nargs='+')
+        `--drop-parameter time:samples:ContentTime`. Only considered together
+        with --keep-unknown.""")
     return parser
 
 
@@ -317,7 +436,7 @@ def main():
     extract(
         args.bids_directory,
         args.output_directory,
-        args.drop_parameter,
+        args.drop_parameter if args.keep_unknown else 'unknown',
     )
     print("Metadata extraction complete.")
 
