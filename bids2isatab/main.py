@@ -80,16 +80,17 @@ def get_keychains(d, dest, prefix):
     return dest
 
 
-def run(args, loglevel):
-    logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
-
-    if not os.path.exists(args.output_directory):
-        logging.info("creating output directory at '{}'".format(args.output_directory))
-        os.makedirs(args.output_directory)
+def extract(
+        bids_directory,
+        output_directory,
+        drop_parameter=None):
+    if not os.path.exists(output_directory):
+        logging.info("creating output directory at '{}'".format(output_directory))
+        os.makedirs(output_directory)
 
     subject_ids = []
     study_dict = OrderedDict()
-    for file in glob(os.path.join(args.bids_directory, "sub-*")):
+    for file in glob(os.path.join(bids_directory, "sub-*")):
         if os.path.isdir(file):
             subject_ids.append(os.path.split(file)[-1][4:])
     subject_ids.sort()
@@ -102,7 +103,7 @@ def run(args, loglevel):
     study_dict["Sample Name"] = subject_ids
     df = pd.DataFrame(study_dict)
 
-    participants_file = os.path.join(args.bids_directory, "participants.tsv")
+    participants_file = os.path.join(bids_directory, "participants.tsv")
     if os.path.exists(participants_file):
         participants_df = pd.read_csv(participants_file, sep="\t")
         participants_df.rename(columns={'participant_id': "Sample Name"}, inplace=True)
@@ -112,7 +113,7 @@ def run(args, loglevel):
                 participants_df.rename(columns={col: "Comment[%s]" % col}, inplace=True)
         df = pd.merge(df, participants_df, left_on="Sample Name", right_on="Sample Name")
 
-    df.to_csv(os.path.join(args.output_directory, "s_study.txt"), sep="\t", index=False)
+    df.to_csv(os.path.join(output_directory, "s_study.txt"), sep="\t", index=False)
 
     assay_dict = OrderedDict()
     sample_names = []
@@ -126,11 +127,11 @@ def run(args, loglevel):
     other_fields = []
     mri_par_names = []
 
-    for file in glob(os.path.join(args.bids_directory, "sub-*", "*", "sub-*.nii.gz")) + \
-            glob(os.path.join(args.bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*.nii.gz")):
+    for file in glob(os.path.join(bids_directory, "sub-*", "*", "sub-*.nii.gz")) + \
+            glob(os.path.join(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*.nii.gz")):
         sample_names.append(os.path.split(file)[-1].split("_")[0][4:])
         assay_names.append(os.path.split(file)[-1].split(".")[0])
-        raw_file.append(file[len(args.bids_directory):])
+        raw_file.append(file[len(bids_directory):])
         types.append(file.split("_")[-1].split(".")[0])
         header = nibabel.load(file).get_header()
         resolutions.append("x".join([str(i) for i in header.get_zooms()[:3]]))
@@ -141,7 +142,7 @@ def run(args, loglevel):
         else:
             rts.append(None)
             rts_units.append(None)
-        other_fields.append(get_metadata_for_nifti(args.bids_directory, file))
+        other_fields.append(get_metadata_for_nifti(bids_directory, file))
 
     assay_dict["Sample Name"] = sample_names
     assay_dict["Protocol REF"] = "Magnetic Resonance Imaging"
@@ -166,26 +167,26 @@ def run(args, loglevel):
     assay_dict["Raw Data File"] = raw_file
 
     df = pd.DataFrame(assay_dict)
-    if args.drop_parameter:
+    if drop_parameter:
         # filter table
         for k in df.keys():
             if k.startswith('Parameter Value['):
                 # get just the ID
                 id_ = k[16:-1]
-                if id_ in args.drop_parameter:
+                if id_ in drop_parameter:
                     print('dropping %s from output' % k)
                     df.drop(k, axis=1, inplace=True)
     df = df.sort_values(['Assay Name'])
-    df.to_csv(os.path.join(args.output_directory, "a_assay.txt"), sep="\t", index=False)
+    df.to_csv(os.path.join(output_directory, "a_assay.txt"), sep="\t", index=False)
 
     this_path = os.path.join(os.path.realpath(__file__))
     template_path = os.path.join(*(os.path.split(this_path)[:-1] + ("i_investigation_template.txt", )))
     investigation_template = open(template_path).read()
 
-    title = os.path.split(args.bids_directory)[-1]
+    title = os.path.split(bids_directory)[-1]
 
-    if os.path.exists(os.path.join(args.bids_directory, "dataset_description.json")):
-        with open(os.path.join(args.bids_directory, "dataset_description.json"), "r") as description_dict_fp:
+    if os.path.exists(os.path.join(bids_directory, "dataset_description.json")):
+        with open(os.path.join(bids_directory, "dataset_description.json"), "r") as description_dict_fp:
             description_dict = json.load(description_dict_fp)
             if "Name" in description_dict:
                 title = description_dict["Name"]
@@ -193,7 +194,7 @@ def run(args, loglevel):
     investigation_template = investigation_template.replace("[TODO: TITLE]", title)
     investigation_template = investigation_template.replace("[TODO: MRI_PAR_NAMES]", ";".join(mri_par_names))
 
-    with open(os.path.join(args.output_directory, "i_investigation.txt"), "w") as fp:
+    with open(os.path.join(output_directory, "i_investigation.txt"), "w") as fp:
         fp.write(investigation_template)
 
 
@@ -242,7 +243,12 @@ def main():
     else:
         loglevel = logging.INFO
 
-    run(args, loglevel)
+    logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
+
+    extract(args.bids_directory,
+        args.output_directory,
+        args.drop_parameter,
+        )
     print("Metadata extraction complete.")
 
 
