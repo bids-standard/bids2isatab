@@ -43,7 +43,18 @@ ontology_term_map = {
         'r;l': ('ambidextrous', 'PATO', 'PATO:0002204'),
         'l;r': ('ambidextrous', 'PATO', 'PATO:0002204'),
     },
+    # take as is ...
     'Parameter Value[4d spacing]': None,
+    # ...but have dedicated unit column
+    'Parameter Unit[4d spacing]': {
+        'millimeter': ('millimiter', 'UO', 'UO:0000016'),
+        'second': ('second', 'UO', 'UO:0000010'),
+        'hertz': ('hertz', 'UO', 'UO:0000106'),
+        'hz': ('hertz', 'UO', 'UO:0000106'),
+        'ppm': ('parts per million', 'UO', 'UO:0000109'),
+        'rad': ('radian', 'UO', 'UO:0000123'),
+        'rads': ('radian', 'UO', 'UO:0000123'),
+    },
     # quantitative information
     "Characteristics[age at scan]": ('UO', 'UO:0000036', 'year'),
     "Parameter Value[resolution]": ('UO', 'UO:0000016', 'millimeter'),
@@ -64,15 +75,6 @@ ontology_term_map = {
     'Parameter Value[modality]': None,
     # not sure if there are terms for SENSE and GRAPPA etc. anywhere
     'Parameter Value[parallel acquisition technique]': None,
-    'Parameter Unit[4d spacing]': {
-        'millimeter': ('millimiter', 'UO', 'UO:0000016'),
-        'second': ('second', 'UO', 'UO:0000010'),
-        'hertz': ('hertz', 'UO', 'UO:0000106'),
-        'hz': ('hertz', 'UO', 'UO:0000106'),
-        'ppm': ('parts per million', 'UO', 'UO:0000109'),
-        'rad': ('radian', 'UO', 'UO:0000123'),
-        'rads': ('radian', 'UO', 'UO:0000123'),
-    },
 # Deal with the following
 #    'Parameter Value[HardcopyDeviceSoftwareVersion]',
 #    'Parameter Value[CogAtlasID]',
