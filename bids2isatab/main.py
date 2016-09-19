@@ -231,7 +231,7 @@ def _describe_mri_file(fpath, bids_directory):
     return info
 
 
-def _get_mri_assay_df(bids_directory):
+def _get_mri_assay_df(bids_directory, modality):
     assay_dict = OrderedDict()
     assay_dict["Protocol REF"] = "Magnetic Resonance Imaging"
 
@@ -247,8 +247,9 @@ def _get_mri_assay_df(bids_directory):
         'rts_units': [],
     }
 
-    for fname in glob(opj(bids_directory, "sub-*", "*", "sub-*.nii.gz")) + \
-            glob(opj(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*.nii.gz")):
+    fname_suffix = '_{}.nii.gz'.format(modality)
+    for fname in glob(opj(bids_directory, "sub-*", "*", "sub-*{}".format(fname_suffix))) + \
+            glob(opj(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*{}".format(fname_suffix))):
         finfo = _describe_mri_file(fname, bids_directory)
         for spec in collector_dict:
             fspec = finfo.get(spec, None)
@@ -411,15 +412,24 @@ def extract(
         sep="\t",
         index=False)
 
-    # generate: a_assay.txt
-    mri_assay_df, mri_par_names = _get_mri_assay_df(bids_directory)
-    _drop_from_df(mri_assay_df, drop_parameter)
-    mri_assay_df = _sort_df(mri_assay_df)
-    mri_assay_df = _df_with_ontology_info(mri_assay_df)
-    mri_assay_df.to_csv(
-        opj(output_directory, "a_assay.txt"),
-        sep="\t",
-        index=False)
+    # all imaging modalities recognized in BIDS
+    for modality in ('T1w', 'T2w', 'T1map', 'T2map', 'FLAIR', 'FLASH', 'PD',
+                     'PDmap', 'PDT2', 'inplaneT1', 'inplaneT2', 'angio',
+                     'sbref', 'bold', 'defacemask', 'SWImagandphase'):
+        # generate: a_assay.txt
+        mri_assay_df, mri_par_names = _get_mri_assay_df(bids_directory, modality)
+        if not len(mri_assay_df):
+            # not files found, try next
+            logging.info(
+                "no files match MRI modality '{}', skipping".format(modality))
+            continue
+        _drop_from_df(mri_assay_df, drop_parameter)
+        mri_assay_df = _sort_df(mri_assay_df)
+        mri_assay_df = _df_with_ontology_info(mri_assay_df)
+        mri_assay_df.to_csv(
+            opj(output_directory, "a_assay_mri_{}.txt".format(modality.lower())),
+            sep="\t",
+            index=False)
 
     # generate: i_investigation.txt
     investigation_template = _get_investigation_template(
