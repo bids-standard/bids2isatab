@@ -197,7 +197,7 @@ def run(args, loglevel):
         fp.write(investigation_template)
 
 
-def main():
+def _get_cmdline_parser():
     class MyParser(argparse.ArgumentParser):
         def error(self, message):
             sys.stderr.write('error: %s\n' % message)
@@ -229,6 +229,11 @@ def main():
         column 'Parameter Value[time:samples:ContentTime]', specify
         `--drop-parameter time:samples:ContentTime`.""",
         nargs='+')
+    return parser
+
+
+def main():
+    parser = _get_cmdline_parser()
     args = parser.parse_args()
 
     # Setup logging
