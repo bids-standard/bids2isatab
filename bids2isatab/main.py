@@ -210,7 +210,10 @@ def _describe_mri_file(fpath, bids_directory):
     fname = psplit(fpath)[-1]
     info = {
         'sample_name': fname.split("_")[0][4:],
-        'assay_name': fname.split(".")[0],
+        # assay name is the entire filename except for the modality suffix
+        # so that, e.g. simultaneous recordings match wrt to the assay name
+        # across assay tables
+        'assay_name': '_'.join(fname.split(".")[0].split('_')[:-1]),
         'raw_filepath': fpath[len(bids_directory):],
         'type': fname.split("_")[-1].split(".")[0]
     }
