@@ -81,15 +81,7 @@ def get_keychains(d, dest, prefix):
     return dest
 
 
-def extract(
-        bids_directory,
-        output_directory,
-        drop_parameter=None):
-    if not exists(output_directory):
-        logging.info(
-            "creating output directory at '{}'".format(output_directory))
-        os.makedirs(output_directory)
-
+def _get_study_df(bids_directory):
     subject_ids = []
     study_dict = OrderedDict()
     for file in glob(opj(bids_directory, "sub-*")):
@@ -123,9 +115,10 @@ def extract(
             participants_df,
             left_on="Sample Name",
             right_on="Sample Name")
+    return df
 
-    df.to_csv(opj(output_directory, "s_study.txt"), sep="\t", index=False)
 
+def _get_mri_assay_df(bids_directory, drop_parameter):
     assay_dict = OrderedDict()
     sample_names = []
     raw_file = []
@@ -188,8 +181,10 @@ def extract(
                     print('dropping %s from output' % k)
                     df.drop(k, axis=1, inplace=True)
     df = df.sort_values(['Assay Name'])
-    df.to_csv(opj(output_directory, "a_assay.txt"), sep="\t", index=False)
+    return df, mri_par_names  # TODO investigate necessity for 2nd return value
 
+
+def _get_investigation_template(bids_directory, mri_par_names):
     this_path = opj(os.path.realpath(__file__))
     template_path = opj(
         *(psplit(this_path)[:-1] + ("i_investigation_template.txt", )))
@@ -208,7 +203,36 @@ def extract(
         "[TODO: TITLE]", title)
     investigation_template = investigation_template.replace(
         "[TODO: MRI_PAR_NAMES]", ";".join(mri_par_names))
+    return investigation_template
 
+
+def extract(
+        bids_directory,
+        output_directory,
+        drop_parameter=None):
+    if not exists(output_directory):
+        logging.info(
+            "creating output directory at '{}'".format(output_directory))
+        os.makedirs(output_directory)
+
+    # generate: s_study.txt
+    study_df = _get_study_df(bids_directory)
+    study_df.to_csv(
+        opj(output_directory, "s_study.txt"),
+        sep="\t",
+        index=False)
+
+    # generate: a_assay.txt
+    mri_assay_df, mri_par_names = _get_mri_assay_df(
+        bids_directory, drop_parameter)
+    mri_assay_df.to_csv(
+        opj(output_directory, "a_assay.txt"),
+        sep="\t",
+        index=False)
+
+    # generate: i_investigation.txt
+    investigation_template = _get_investigation_template(
+        bids_directory, mri_par_names)
     with open(opj(output_directory, "i_investigation.txt"), "w") as fp:
         fp.write(investigation_template)
 
