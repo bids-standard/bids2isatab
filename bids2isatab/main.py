@@ -86,7 +86,8 @@ def extract(
         output_directory,
         drop_parameter=None):
     if not exists(output_directory):
-        logging.info("creating output directory at '{}'".format(output_directory))
+        logging.info(
+            "creating output directory at '{}'".format(output_directory))
         os.makedirs(output_directory)
 
     subject_ids = []
@@ -107,12 +108,21 @@ def extract(
     participants_file = opj(bids_directory, "participants.tsv")
     if exists(participants_file):
         participants_df = pd.read_csv(participants_file, sep="\t")
-        participants_df.rename(columns={'participant_id': "Sample Name"}, inplace=True)
-        participants_df["Sample Name"] = [s[4:] for s in list(participants_df["Sample Name"])]
+        participants_df.rename(
+            columns={'participant_id': "Sample Name"},
+            inplace=True)
+        participants_df["Sample Name"] = \
+            [s[4:] for s in list(participants_df["Sample Name"])]
         for col in participants_df.columns.tolist():
             if col != "Sample Name":
-                participants_df.rename(columns={col: "Comment[%s]" % col}, inplace=True)
-        df = pd.merge(df, participants_df, left_on="Sample Name", right_on="Sample Name")
+                participants_df.rename(
+                    columns={col: "Comment[%s]" % col},
+                    inplace=True)
+        df = pd.merge(
+            df,
+            participants_df,
+            left_on="Sample Name",
+            right_on="Sample Name")
 
     df.to_csv(opj(output_directory, "s_study.txt"), sep="\t", index=False)
 
@@ -181,19 +191,23 @@ def extract(
     df.to_csv(opj(output_directory, "a_assay.txt"), sep="\t", index=False)
 
     this_path = opj(os.path.realpath(__file__))
-    template_path = opj(*(psplit(this_path)[:-1] + ("i_investigation_template.txt", )))
+    template_path = opj(
+        *(psplit(this_path)[:-1] + ("i_investigation_template.txt", )))
     investigation_template = open(template_path).read()
 
     title = psplit(bids_directory)[-1]
 
     if exists(opj(bids_directory, "dataset_description.json")):
-        with open(opj(bids_directory, "dataset_description.json"), "r") as description_dict_fp:
+        with open(opj(bids_directory, "dataset_description.json"), "r") \
+                as description_dict_fp:
             description_dict = json.load(description_dict_fp)
             if "Name" in description_dict:
                 title = description_dict["Name"]
 
-    investigation_template = investigation_template.replace("[TODO: TITLE]", title)
-    investigation_template = investigation_template.replace("[TODO: MRI_PAR_NAMES]", ";".join(mri_par_names))
+    investigation_template = investigation_template.replace(
+        "[TODO: TITLE]", title)
+    investigation_template = investigation_template.replace(
+        "[TODO: MRI_PAR_NAMES]", ";".join(mri_par_names))
 
     with open(opj(output_directory, "i_investigation.txt"), "w") as fp:
         fp.write(investigation_template)
