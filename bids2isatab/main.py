@@ -60,15 +60,11 @@ ontology_term_map = {
     'Raw Data File': None,
     # modality should get proper terms attached
     'Parameter Value[modality]': None,
+    # not sure if there are terms for SENSE and GRAPPA etc. anywhere
+    'Parameter Value[parallel acquisition technique]': None,
 # Deal with the following
-#    'Parameter Value[PhaseEncodingDirection]',
 #    'Parameter Value[HardcopyDeviceSoftwareVersion]',
-#    'Parameter Value[SliceTiming]',
-#    'Parameter Value[ParallelReductionFactorInPlane]',
 #    'Parameter Value[CogAtlasID]',
-#    'Parameter Value[TaskDescription]',
-#    'Parameter Value[SliceEncodingDirection]',
-#    'Parameter Value[ParallelAcquisitionTechnique]',
 #    'Parameter Value[CogPOID]',
 }
 
@@ -86,6 +82,7 @@ parameter_name_map = {
     "repetitiontime": "repetition time",
     "flipangle": "flip angle",
     "pulsesequencetype": "sequence",
+    "parallelacquisitiontechnique": "parallel acquisition technique",
 }
 
 # standardize columns from participants.tsv
