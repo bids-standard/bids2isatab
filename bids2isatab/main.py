@@ -15,10 +15,6 @@ import json
 import pandas as pd
 
 
-# Gather our code in a main() function
-from shutil import copy
-
-
 def get_metadata_for_nifti(bids_root, path):
 
     sidecarJSON = path.replace(".nii.gz", ".json")
@@ -28,8 +24,8 @@ def get_metadata_for_nifti(bids_root, path):
     sessionLevelComponentList = []
     subjectLevelComponentList = []
     topLevelComponentList = []
-    ses = None;
-    sub = None;
+    ses = None
+    sub = None
 
     for filenameComponent in filenameComponents:
         if filenameComponent[:3] != "run":
@@ -63,6 +59,7 @@ def get_metadata_for_nifti(bids_root, path):
 
     return merged_param_dict
 
+
 def get_chainvalue(chain, src):
     try:
         for key in chain:
@@ -70,6 +67,7 @@ def get_chainvalue(chain, src):
         return src
     except KeyError:
         return None
+
 
 def get_keychains(d, dest, prefix):
     if isinstance(d, dict):
@@ -80,6 +78,7 @@ def get_keychains(d, dest, prefix):
             # ignore empty stuff
             dest = dest.union((tuple(prefix),))
     return dest
+
 
 def run(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
@@ -110,7 +109,7 @@ def run(args, loglevel):
         participants_df["Sample Name"] = [s[4:] for s in list(participants_df["Sample Name"])]
         for col in participants_df.columns.tolist():
             if col != "Sample Name":
-                participants_df.rename(columns={col:"Comment[%s]"%col}, inplace=True)
+                participants_df.rename(columns={col: "Comment[%s]" % col}, inplace=True)
         df = pd.merge(df, participants_df, left_on="Sample Name", right_on="Sample Name")
 
     df.to_csv(os.path.join(args.output_directory, "s_study.txt"), sep="\t", index=False)
