@@ -22,19 +22,25 @@ import pandas as pd
 ontology_term_map = {
     # qualitative information
     "Characteristics[organism]": {
-        'homo sapiens': ('NCBITAXON', 'NCBITaxon:9606'),
+        'homo sapiens': ('homo sapiens', 'NCBITAXON', 'NCBITaxon:9606'),
     },
     "Characteristics[organism part]": {
-        'brain': ('UBERON', 'UBERON:0000955'),
+        'brain': ('brain', 'UBERON', 'UBERON:0000955'),
     },
     "Characteristics[sex]": {
-        'female': ('PATO', 'PATO:0000383'),
-        'male': ('PATO', 'PATO:0000384'),
+        'female': ('female', 'PATO', 'PATO:0000383'),
+        'f': ('female', 'PATO', 'PATO:0000383'),
+        'male': ('male', 'PATO', 'PATO:0000384'),
+        'm': ('male', 'PATO', 'PATO:0000384'),
     },
     "Characteristics[handedness]": {
-        'right':  ('PATO', 'PATO:0002203'),
-        'left': ('PATO', 'PATO:0002202'),
-        'ambidextrous': ('PATO', 'PATO:0002204'),
+        'right':  ('right', 'PATO', 'PATO:0002203'),
+        'r':  ('right', 'PATO', 'PATO:0002203'),
+        'left': ('left', 'PATO', 'PATO:0002202'),
+        'l': ('left', 'PATO', 'PATO:0002202'),
+        'ambidextrous': ('ambidextrous', 'PATO', 'PATO:0002204'),
+        'r;l': ('ambidextrous', 'PATO', 'PATO:0002204'),
+        'l;r': ('ambidextrous', 'PATO', 'PATO:0002204'),
     },
     # quantitative information
     "Characteristics[age at scan]": ('UO', 'UO:0000036', 'year'),
@@ -81,6 +87,15 @@ parameter_name_map = {
     "repetitiontime": "repetition time",
     "flipangle": "flip angle",
     "pulsesequencetype": "sequence",
+}
+
+# standardize columns from participants.tsv
+sample_property_name_map = {
+    "age": "Characteristics[age at scan]",
+    "gender": "Characteristics[sex]",
+    "handedness": "Characteristics[handedness]",
+    "participant_id": "Sample Name",
+    "sex": "Characteristics[sex]",
 }
 
 
@@ -157,32 +172,37 @@ def _get_study_df(bids_directory):
             subject_ids.append(psplit(file)[-1][4:])
     subject_ids.sort()
     study_dict["Source Name"] = subject_ids
-    study_dict["Characteristics[organism]"] = "Homo sapiens"
-    study_dict["Term Source REF"] = "NCBITAXON"
-    study_dict["Term Accession Number"] = "NCBITaxon:9606"
+    study_dict["Characteristics[organism]"] = "homo sapiens"
     study_dict["Characteristics[organism part]"] = "brain"
     study_dict["Protocol REF"] = "Participant recruitment"
     study_dict["Sample Name"] = subject_ids
     df = pd.DataFrame(study_dict)
 
     participants_file = opj(bids_directory, "participants.tsv")
-    if exists(participants_file):
-        participants_df = pd.read_csv(participants_file, sep="\t")
-        participants_df.rename(
-            columns={'participant_id': "Sample Name"},
-            inplace=True)
-        participants_df["Sample Name"] = \
-            [s[4:] for s in list(participants_df["Sample Name"])]
-        for col in participants_df.columns.tolist():
-            if col != "Sample Name":
-                participants_df.rename(
-                    columns={col: "Comment[%s]" % col},
-                    inplace=True)
-        df = pd.merge(
-            df,
-            participants_df,
-            left_on="Sample Name",
-            right_on="Sample Name")
+    if not exists(participants_file):
+        return df
+
+    participants_df = pd.read_csv(participants_file, sep="\t")
+    rename_rule = sample_property_name_map.copy()
+    # remove all mapping that do not match the columns at hand
+    for r in rename_rule.keys():
+        if not r in participants_df.keys():
+            del rename_rule[r]
+    # turn all unknown properties into comment columns
+    for c in participants_df.keys():
+        if not c in rename_rule:
+            rename_rule[c] = "Comment[{}]".format(c.lower())
+
+    participants_df.rename(columns=rename_rule, inplace=True)
+    # simplify sample names by stripping the common prefix
+    participants_df["Sample Name"] = \
+        [s[4:] for s in list(participants_df["Sample Name"])]
+    # merge participant info with study info
+    df = pd.merge(
+        df,
+        participants_df,
+        left_on="Sample Name",
+        right_on="Sample Name")
     return df
 
 
@@ -318,29 +338,32 @@ def _drop_from_df(df, drop):
 def _df_with_ontology_info(df):
     items = []
     for col, val in df.iteritems():
-        # put each input column in the output unconditionally
-        items.append((col, val))
         # check if we know something about this column
         term_map = ontology_term_map.get(col, None)
         if term_map is None:
+            items.append((col, val))
             # we know nothing more
             continue
-        if isinstance(term_map, tuple):
+        elif isinstance(term_map, tuple):
             # this is quantitative information -> 4-column group
+            items.append((col, val))
             items.append(('Unit', term_map[2]))
             items.append(('Term Source REF', term_map[0]))
             items.append(('Term Accession Number', term_map[1]))
-        elif isinstance(term_map, tuple):
+        elif isinstance(term_map, dict):
             # this is qualitative information -> 3-column group
+            normvals = []
             refs = []
             acss = []
             for v in val:
-                ref, acs = term_map.get(v, (None, None))
+                normval, ref, acs = term_map.get(v.lower(), (None, None, None))
+                normvals.append(normval)
                 refs.append(ref)
                 acss.append(acs)
-                if ref is None:
+                if normval is None:
                     logging.warn("unknown value '{}' for '{}' (known: {})".format(
                         v, col, term_map.keys()))
+            items.append((col, normvals))
             items.append(('Term Source REF', refs))
             items.append(('Term Accession Number', acss))
     return pd.DataFrame.from_items(items)
