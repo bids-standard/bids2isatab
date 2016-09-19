@@ -58,14 +58,13 @@ ontology_term_map = {
     'Sample Name': None,
     'Assay Name': None,
     'Raw Data File': None,
+    # modality should get proper terms attached
+    'Parameter Value[modality]': None,
 # Deal with the following
-#    'Parameter Value[Modality]',
-#    'Parameter Value[Resolution]',
 #    'Parameter Value[PhaseEncodingDirection]',
 #    'Parameter Value[HardcopyDeviceSoftwareVersion]',
 #    'Parameter Value[SliceTiming]',
 #    'Parameter Value[ParallelReductionFactorInPlane]',
-#    'Parameter Value[StoryDepthSegmentRatings]',
 #    'Parameter Value[CogAtlasID]',
 #    'Parameter Value[TaskDescription]',
 #    'Parameter Value[SliceEncodingDirection]',
@@ -262,8 +261,8 @@ def _get_mri_assay_df(bids_directory, modality):
     for spec_out, spec_in in (
             # order is important!!
             ("Sample Name", "sample_name"),
-            ("Parameter Value[Modality]", 'type'),
-            ("Parameter Value[Resolution]", 'resolution'),
+            ("Parameter Value[modality]", 'type'),
+            ("Parameter Value[resolution]", 'resolution'),
             ("Unit", 'resolutions_units')):
         assay_dict[spec_out] = collector_dict[spec_in]
 
