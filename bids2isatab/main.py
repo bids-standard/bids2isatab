@@ -301,24 +301,34 @@ def _describe_mri_file(fpath, bids_directory):
 
 
 def _get_mri_assay_df(bids_directory, modality):
-    assay_dict = OrderedDict()
-    assay_dict["Protocol REF"] = "Magnetic Resonance Imaging"
-
-    collector_dict = {
-        'sample_name': [],
-        'assay_name': [],
-        'raw_filepath': [],
-        'type': [],
-        'other_fields': [],
-        'resolution': [],
-        'rts': [],
-        'rts_unit': [],
-    }
-
+    # locate MRI files
     fname_suffix = '_{}.nii.gz'.format(modality)
-    for fname in glob(opj(bids_directory, "sub-*", "*", "sub-*{}".format(fname_suffix))) + \
-            glob(opj(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*{}".format(fname_suffix))):
-        finfo = _describe_mri_file(fname, bids_directory)
+    files = glob(
+        opj(bids_directory, "sub-*", "*", "sub-*{}".format(fname_suffix)))
+    files += glob(
+        opj(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*{}".format(
+            fname_suffix)))
+
+    df, params = _get_assay_df(
+        bids_directory,
+        modality,
+        "Magnetic Resonance Imaging",
+        files,
+        _describe_mri_file,
+        ['sample_name', 'assay_name', 'raw_filepath', 'type', 'other_fields',
+         'resolution', 'rts', 'rts_unit'])
+    return df, params
+
+
+def _get_assay_df(bids_directory, modality, protocol_ref, files, file_descr,
+                  info_keys):
+    assay_dict = OrderedDict()
+    assay_dict["Protocol REF"] = protocol_ref
+
+    collector_dict = dict(zip(info_keys, [[] for i in range(len(info_keys))]))
+
+    for fname in files:
+        finfo = file_descr(fname, bids_directory)
         for spec in collector_dict:
             fspec = finfo.get(spec, None)
             collector_dict[spec].append(fspec)
@@ -326,6 +336,8 @@ def _get_mri_assay_df(bids_directory, modality):
     # map gathered info into assay dict
     for spec_out, spec_in in (
             # order is important!!
+            ("Assay Name", 'assay_name'),
+            ("Raw Data File", 'raw_filepath'),
             ("Sample Name", "sample_name"),
             ("Parameter Value[modality]", 'type'),
             ("Parameter Value[resolution]", 'resolution'),
@@ -355,16 +367,13 @@ def _get_mri_assay_df(bids_directory, modality):
         for d in collector_dict['other_fields']:
             assay_dict[column_id].append(get_chainvalue(field, d))
 
-    # TODO: check whether this loop can be merged with the similar one above
-    for spec_out, spec_in in (
-            # order is important!!
-            ("Assay Name", 'assay_name'),
-            ("Raw Data File", 'raw_filepath')):
-        assay_dict[spec_out] = collector_dict[spec_in]
-
-    df = pd.DataFrame(assay_dict)
-    df = df.sort_values(['Assay Name'])
-    return df, mri_par_names  # TODO investigate necessity for 2nd return value
+    if 'Assay Name' in assay_dict:
+        df = pd.DataFrame(assay_dict)
+        df = df.sort_values(['Assay Name'])
+        return df, mri_par_names  # TODO investigate necessity for 2nd return value
+    else:
+        # i got nothing
+        return pd.DataFrame(), []
 
 
 def _get_investigation_template(bids_directory, mri_par_names):
