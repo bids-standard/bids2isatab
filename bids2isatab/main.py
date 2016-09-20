@@ -232,7 +232,7 @@ def _get_study_df(bids_directory):
     return df
 
 
-def _describe_mri_file(fpath, bids_directory):
+def _describe_file(fpath, bids_directory):
     fname = psplit(fpath)[-1]
     info = {
         'sample_name': fname.split("_")[0][4:],
@@ -245,8 +245,16 @@ def _describe_mri_file(fpath, bids_directory):
     }
     info['other_fields'] = get_bids_metadata(
         bids_directory,
-        fname[:-7]  # strip .nii.gz
+        # strip anything after first '.', should just strip extension,
+        # as '.' is otherwise not allowed
+        fname[:fname.index('.')]
     )
+    return info
+
+
+def _describe_mri_file(fpath, bids_directory):
+    info = _describe_file(fpath, bids_directory)
+
     if not exists(fpath):
         # this could happen in the case of a dead symlink in,
         # e.g., a git-annex repo
