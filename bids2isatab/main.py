@@ -300,14 +300,18 @@ def _describe_mri_file(fpath, bids_directory):
     return info
 
 
+def _get_file_matches(bids_directory, glob_pattern):
+    files = glob(
+        opj(bids_directory, "sub-*", "*", "sub-{}".format(glob_pattern)))
+    files += glob(
+        opj(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-{}".format(
+            glob_pattern)))
+    return files
+
+
 def _get_mri_assay_df(bids_directory, modality):
     # locate MRI files
-    fname_suffix = '_{}.nii.gz'.format(modality)
-    files = glob(
-        opj(bids_directory, "sub-*", "*", "sub-*{}".format(fname_suffix)))
-    files += glob(
-        opj(bids_directory, "sub-*", "ses-*", "*", "sub-*_ses-*{}".format(
-            fname_suffix)))
+    files = _get_file_matches(bids_directory, '*_{}.nii.gz'.format(modality))
 
     df, params = _get_assay_df(
         bids_directory,
