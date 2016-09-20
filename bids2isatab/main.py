@@ -120,49 +120,49 @@ def get_bids_metadata(bids_root, basepath):
       Relative path to the file (filename without extension, e.g. no '.nii.gz')
       for which meta data shall be queried.
     """
-    sidecarJSON = '{}.json'.format(basepath)
+    sidecar_json = '{}.json'.format(basepath)
 
-    pathComponents = psplit(sidecarJSON)
-    filenameComponents = pathComponents[-1].split("_")
-    sessionLevelComponentList = []
-    subjectLevelComponentList = []
-    topLevelComponentList = []
+    path_components = psplit(sidecar_json)
+    filename_components = path_components[-1].split("_")
+    session_level_componentList = []
+    subject_level_componentList = []
+    top_level_componentList = []
     ses = None
     sub = None
 
-    for filenameComponent in filenameComponents:
-        if filenameComponent[:3] != "run":
-            sessionLevelComponentList.append(filenameComponent)
-            if filenameComponent[:3] == "ses":
-                ses = filenameComponent
+    for filename_component in filename_components:
+        if filename_component[:3] != "run":
+            session_level_componentList.append(filename_component)
+            if filename_component[:3] == "ses":
+                ses = filename_component
             else:
-                subjectLevelComponentList.append(filenameComponent)
-                if filenameComponent[:3] == "sub":
-                    sub = filenameComponent
+                subject_level_componentList.append(filename_component)
+                if filename_component[:3] == "sub":
+                    sub = filename_component
                 else:
-                    topLevelComponentList.append(filenameComponent)
+                    top_level_componentList.append(filename_component)
 
     # the top-level should have at least two components, e.g. task and modality
     # but could also have more, e.g. task, recording and modality
     # query sidecars for each single-component plus modality
-    potentialJSONs = []
-    for comp in topLevelComponentList[:-1]:
-        potentialJSONs.append(
-            opj(bids_root, "_".join([comp, topLevelComponentList[-1]])))
+    potential_jsons = []
+    for comp in top_level_componentList[:-1]:
+        potential_jsons.append(
+            opj(bids_root, "_".join([comp, top_level_componentList[-1]])))
     # and one for all components combined
-    potentialJSONs.append(opj(bids_root, "_".join(topLevelComponentList)))
+    potential_jsons.append(opj(bids_root, "_".join(top_level_componentList)))
 
-    subjectLevelJSON = opj(bids_root, sub, "_".join(subjectLevelComponentList))
-    potentialJSONs.append(subjectLevelJSON)
+    subject_level_json = opj(bids_root, sub, "_".join(subject_level_componentList))
+    potential_jsons.append(subject_level_json)
 
     if ses:
-        sessionLevelJSON = opj(bids_root, sub, ses, "_".join(sessionLevelComponentList))
-        potentialJSONs.append(sessionLevelJSON)
+        session_level_json = opj(bids_root, sub, ses, "_".join(session_level_componentList))
+        potential_jsons.append(session_level_json)
 
-    potentialJSONs.append(sidecarJSON)
+    potential_jsons.append(sidecar_json)
 
     merged_param_dict = {}
-    for json_file_path in potentialJSONs:
+    for json_file_path in potential_jsons:
         if exists(json_file_path):
             param_dict = json.load(open(json_file_path, "r"))
             merged_param_dict.update(param_dict)
