@@ -132,8 +132,15 @@ def get_metadata_for_nifti(bids_root, path):
                 else:
                     topLevelComponentList.append(filenameComponent)
 
-    topLevelJSON = opj(bids_root, "_".join(topLevelComponentList))
-    potentialJSONs = [topLevelJSON]
+    # the top-level should have at least two components, e.g. task and modality
+    # but could also have more, e.g. task, recording and modality
+    # query sidecars for each single-component plus modality
+    potentialJSONs = []
+    for comp in topLevelComponentList[:-1]:
+        potentialJSONs.append(
+            opj(bids_root, "_".join([comp, topLevelComponentList[-1]])))
+    # and one for all components combined
+    potentialJSONs.append(opj(bids_root, "_".join(topLevelComponentList)))
 
     subjectLevelJSON = opj(bids_root, sub, "_".join(subjectLevelComponentList))
     potentialJSONs.append(subjectLevelJSON)
