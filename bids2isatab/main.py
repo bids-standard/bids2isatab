@@ -69,6 +69,9 @@ ontology_term_map = {
     "Parameter Value[instrument software version]": None,
     "Parameter Value[coil type]": None,
     "Parameter Value[sequence]": None,
+    # TODO next two maybe factor values?
+    "Parameter Value[recording label]": None,
+    "Parameter Value[acquisition label]": None,
     'Protocol REF': None,
     'Sample Name': None,
     'Assay Name': None,
@@ -237,20 +240,26 @@ def _get_study_df(bids_directory):
 
 def _describe_file(fpath, bids_directory):
     fname = psplit(fpath)[-1]
+    fname_components = fname.split(".")[0].split('_')
     info = {
-        'Sample Name': fname.split("_")[0][4:],
+        'Sample Name': fname_components[0][4:],
         # assay name is the entire filename except for the modality suffix
         # so that, e.g. simultaneous recordings match wrt to the assay name
         # across assay tables
-        'Assay Name': '_'.join(fname.split(".")[0].split('_')[:-1]),
+        'Assay Name': '_'.join(fname_components[:-1]),
         'Raw Data File': fpath[len(bids_directory):],
-        'Parameter Value[modality]': fname.split("_")[-1].split(".")[0]
+        'Parameter Value[modality]': fname_components[-1]
     }
+    comp_dict = dict([c.split('-') for c in fname_components[:-1]])
+    for l in ('rec', 'recording'):
+        if l in comp_dict:
+            info['Parameter Value[recording label]'] = comp_dict[l]
+    for l in ('acq', 'acquisition'):
+        if l in comp_dict:
+            info['Parameter Value[acquisition label]'] = comp_dict[l]
     info['other_fields'] = get_bids_metadata(
         bids_directory,
-        # strip anything after first '.', should just strip extension,
-        # as '.' is otherwise not allowed
-        fname[:fname.index('.')]
+        '_'.join(fname_components)
     )
     return info
 
