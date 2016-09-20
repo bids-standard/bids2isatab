@@ -62,6 +62,7 @@ ontology_term_map = {
     "Parameter Value[magnetic field strength]": ('UO', 'UO:0000228', 'tesla'),
     "Parameter Value[flip angle]": ('UO', 'UO:0000185', 'degree'),
     "Parameter Value[echo time]": ('UO', 'UO:0000010', 'second'),
+    "Parameter Value[sampling frequency]": ('UO', 'UO:0000106', 'hertz'),
     # no associated term, keep but leave untouched
     "Parameter Value[instrument name]": None,
     "Parameter Value[instrument manufacturer]": None,
@@ -97,6 +98,8 @@ parameter_name_map = {
     "flipangle": "flip angle",
     "pulsesequencetype": "sequence",
     "parallelacquisitiontechnique": "parallel acquisition technique",
+    "samplingfrequency": "sampling frequency",
+    "contentdescription": "content description",
 }
 
 # standardize columns from participants.tsv
@@ -325,18 +328,17 @@ def _get_mri_assay_df(bids_directory, modality):
 def _get_assay_df(bids_directory, modality, protocol_ref, files, file_descr):
     assay_dict = OrderedDict()
     assay_dict["Protocol REF"] = protocol_ref
-
     finfos = []
     info_keys = set()
     for fname in files:
         finfo = file_descr(fname, bids_directory)
         info_keys = info_keys.union(finfo.keys())
+        finfos.append(finfo)
     collector_dict = dict(zip(info_keys, [[] for i in range(len(info_keys))]))
     for finfo in finfos:
         for spec in info_keys:
             fspec = finfo.get(spec, None)
             collector_dict[spec].append(fspec)
-
     for k in collector_dict:
         if k == 'other_fields':
             # special case dealt with below
@@ -370,7 +372,6 @@ def _get_assay_df(bids_directory, modality, protocol_ref, files, file_descr):
         df = df.sort_values(['Assay Name'])
         return df, mri_par_names  # TODO investigate necessity for 2nd return value
     else:
-        # i got nothing
         return pd.DataFrame(), []
 
 
@@ -542,6 +543,16 @@ def extract(
             mri_assay_df,
             output_directory,
             "a_assay_mri_{}.txt".format(modality.lower()))
+
+    df, params = _get_assay_df(
+        bids_directory,
+        'physio',
+        "Physiological Measurement",
+        _get_file_matches(bids_directory, '*_physio.tsv.gz'),
+        _describe_file)
+    _store_beautiful_table(df, output_directory, 'a_assay_physio.txt')
+    return df, params
+
 
     # generate: i_investigation.txt
     investigation_template = _get_investigation_template(
