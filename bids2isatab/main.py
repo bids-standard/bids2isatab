@@ -73,6 +73,11 @@ ontology_term_map = {
     "Parameter Value[recording label]": None,
     "Parameter Value[acquisition label]": None,
     "Parameter Value[content description]": None,
+    # Keep any task factor, and any of the two task term sources
+    # of which one will get used (whatever is found first)
+    "Factor Value[task]": None,
+    'Parameter Value[CogAtlasID]': None,
+    'Parameter Value[CogPOID]': None,
     'Protocol REF': None,
     'Sample Name': None,
     'Assay Name': None,
@@ -81,9 +86,6 @@ ontology_term_map = {
     'Parameter Value[modality]': None,
     # not sure if there are terms for SENSE and GRAPPA etc. anywhere
     'Parameter Value[parallel acquisition technique]': None,
-# Deal with the following
-#    'Parameter Value[CogAtlasID]',
-#    'Parameter Value[CogPOID]',
 }
 
 # translate from what we find in BIDS or a DICOM dump into the
@@ -258,6 +260,8 @@ def _describe_file(fpath, bids_directory):
     for l in ('acq', 'acquisition'):
         if l in comp_dict:
             info['Parameter Value[acquisition label]'] = comp_dict[l]
+    if 'task' in comp_dict:
+        info['Factor Value[task]'] = comp_dict['task']
     info['other_fields'] = get_bids_metadata(
         bids_directory,
         '_'.join(fname_components)
@@ -433,14 +437,16 @@ def _item_sorter_key(item):
         return 0
     elif name.startswith('Characteristics['):
         return 1
-    elif name.startswith('Protocol REF'):
+    elif name.startswith('Factor Value['):
         return 2
-    elif name == 'Assay Name':
+    elif name.startswith('Protocol REF'):
         return 3
-    elif name.startswith('Parameter Value['):
+    elif name == 'Assay Name':
         return 4
-    elif name == 'Raw Data File':
+    elif name.startswith('Parameter Value['):
         return 5
+    elif name == 'Raw Data File':
+        return 6
     elif name.startswith('Comment['):
         return 10
     elif name.startswith('Parameter Unit['):
@@ -471,6 +477,8 @@ def _extend_column_list(clist, addition, after=None):
 
 def _df_with_ontology_info(df):
     items = []
+    # check whether we need ontology info for a task factor
+    need_task_terms = False
     for col, val in df.iteritems():
         # check if we know something about this column
         term_map = ontology_term_map.get(col, None)
@@ -506,6 +514,25 @@ def _df_with_ontology_info(df):
             # parameter value column
             after = 'Parameter Value[{}]'.format(col[15:-1])
             new_columns[0] = ('Unit', new_columns[0][1])
+        elif col == 'Factor Value[task]':
+            # flag that we ought to be looking for task info
+            need_task_terms = True
+        elif col in ('Parameter Value[CogPOID]',
+                     'Parameter Value[CogAtlasID]'):
+            if not need_task_terms:
+                after = None
+                new_columns = []
+            else:
+                after = 'Factor Value[task]'
+                # TODO check with Varsha how those could be formated
+                terms = [v.strip('/').split('/')[-1] if v is not None else None
+                         for v in val]
+                source_refs = [v[:-(len(terms[i]))] if terms[i] is not None else None
+                               for i, v in enumerate(val)]
+                new_columns = [('Term Source REF', source_refs),
+                               ('Term Accession Number', terms)]
+                # ignore a possible second term set
+                need_task_terms = False
         else:
             # straight append
             after = None
