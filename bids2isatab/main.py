@@ -109,8 +109,18 @@ sample_property_name_map = {
 }
 
 
-def get_metadata_for_nifti(bids_root, path):
-    sidecarJSON = path.replace(".nii.gz", ".json")
+def get_bids_metadata(bids_root, basepath):
+    """Query the BIDS meta data JSON file hierarchy
+
+    Parameters
+    ----------
+    bids_root : path
+      Path to the root of the BIDS dataset
+    basepath : path
+      Relative path to the file (filename without extension, e.g. no '.nii.gz')
+      for which meta data shall be queried.
+    """
+    sidecarJSON = '{}.json'.format(basepath)
 
     pathComponents = psplit(sidecarJSON)
     filenameComponents = pathComponents[-1].split("_")
@@ -233,7 +243,10 @@ def _describe_mri_file(fpath, bids_directory):
         'raw_filepath': fpath[len(bids_directory):],
         'type': fname.split("_")[-1].split(".")[0]
     }
-    info['other_fields'] = get_metadata_for_nifti(bids_directory, fname)
+    info['other_fields'] = get_bids_metadata(
+        bids_directory,
+        fname[:-7]  # strip .nii.gz
+    )
     if not exists(fpath):
         # this could happen in the case of a dead symlink in,
         # e.g., a git-annex repo
