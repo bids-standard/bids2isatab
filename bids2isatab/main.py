@@ -235,13 +235,13 @@ def _get_study_df(bids_directory):
 def _describe_file(fpath, bids_directory):
     fname = psplit(fpath)[-1]
     info = {
-        'sample_name': fname.split("_")[0][4:],
+        'Sample Name': fname.split("_")[0][4:],
         # assay name is the entire filename except for the modality suffix
         # so that, e.g. simultaneous recordings match wrt to the assay name
         # across assay tables
-        'assay_name': '_'.join(fname.split(".")[0].split('_')[:-1]),
-        'raw_filepath': fpath[len(bids_directory):],
-        'type': fname.split("_")[-1].split(".")[0]
+        'Assay Name': '_'.join(fname.split(".")[0].split('_')[:-1]),
+        'Raw Data File': fpath[len(bids_directory):],
+        'Parameter Value[modality]': fname.split("_")[-1].split(".")[0]
     }
     info['other_fields'] = get_bids_metadata(
         bids_directory,
@@ -278,7 +278,7 @@ def _describe_mri_file(fpath, bids_directory):
         raise RuntimeError("unexpected spatial unit code '{}' from NiBabel".format(
             spatial_unit))
 
-    info['resolution'] = "x".join(
+    info['Parameter Value[resolution]'] = "x".join(
         [str(i * spatial_unit_conversion) for i in header.get_zooms()[:3]])
     if len(header.get_zooms()) > 3:
         # got a 4th dimension
@@ -291,12 +291,12 @@ def _describe_mri_file(fpath, bids_directory):
         rts_unit_conversion = {
             'msec': 0.001,
             'micron': 0.000001}.get(rts_unit, 1.0)
-        info['rts'] = header.get_zooms()[3] * rts_unit_conversion
+        info['Parameter Value[4d spacing]'] = header.get_zooms()[3] * rts_unit_conversion
         if rts_unit in ('hz', 'ppm', 'rads'):
             # not a time unit
-            info['rts_unit'] = rts_unit
+            info['Parameter Unit[4d spacing]'] = rts_unit
         else:
-            info['rts_unit'] = 'second'
+            info['Parameter Unit[4d spacing]'] = 'second'
     return info
 
 
@@ -314,45 +314,39 @@ def _get_mri_assay_df(bids_directory, modality):
         modality,
         "Magnetic Resonance Imaging",
         files,
-        _describe_mri_file,
-        ['sample_name', 'assay_name', 'raw_filepath', 'type', 'other_fields',
-         'resolution', 'rts', 'rts_unit'])
+        _describe_mri_file)
     return df, params
 
 
-def _get_assay_df(bids_directory, modality, protocol_ref, files, file_descr,
-                  info_keys):
+def _get_assay_df(bids_directory, modality, protocol_ref, files, file_descr):
     assay_dict = OrderedDict()
     assay_dict["Protocol REF"] = protocol_ref
 
-    collector_dict = dict(zip(info_keys, [[] for i in range(len(info_keys))]))
-
+    finfos = []
+    info_keys = set()
     for fname in files:
         finfo = file_descr(fname, bids_directory)
-        for spec in collector_dict:
+        info_keys = info_keys.union(finfo.keys())
+    collector_dict = dict(zip(info_keys, [[] for i in range(len(info_keys))]))
+    for finfo in finfos:
+        for spec in info_keys:
             fspec = finfo.get(spec, None)
             collector_dict[spec].append(fspec)
 
-    # map gathered info into assay dict
-    for spec_out, spec_in in (
-            # order is important!!
-            ("Assay Name", 'assay_name'),
-            ("Raw Data File", 'raw_filepath'),
-            ("Sample Name", "sample_name"),
-            ("Parameter Value[modality]", 'type'),
-            ("Parameter Value[resolution]", 'resolution'),
-            ("Parameter Value[4d spacing]", 'rts'),
-            ("Parameter Unit[4d spacing]", 'rts_unit')):
+    for k in collector_dict:
+        if k == 'other_fields':
+            # special case dealt with below
+            continue
         # skip empty
-        if not all([v is None for v in collector_dict[spec_in]]):
-            assay_dict[spec_out] = collector_dict[spec_in]
+        if not all([v is None for v in collector_dict[k]]):
+            assay_dict[k] = collector_dict[k]
 
     # record order of parameters; needs to match order in above loop
     mri_par_names = ["Resolution", "Modality"]
 
     # determine the union of any additional fields found for any file
     new_fields = set()
-    for d in collector_dict['other_fields']:
+    for d in collector_dict.get('other_fields', []):
         new_fields = get_keychains(d, new_fields, [])
     # create a parameter column for each of them
     for field in new_fields:
