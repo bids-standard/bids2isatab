@@ -72,6 +72,7 @@ ontology_term_map = {
     # TODO next two maybe factor values?
     "Parameter Value[recording label]": None,
     "Parameter Value[acquisition label]": None,
+    "Parameter Value[content description]": None,
     'Protocol REF': None,
     'Sample Name': None,
     'Assay Name': None,
@@ -422,6 +423,7 @@ def _drop_from_df(df, drop):
         if k in drop:
             print('dropping %s from output' % k)
             df.drop(k, axis=1, inplace=True)
+    return df
 
 
 def _item_sorter_key(item):
@@ -553,15 +555,31 @@ def extract(
             output_directory,
             "a_assay_mri_{}.txt".format(modality.lower()))
 
+    # physio
     df, params = _get_assay_df(
         bids_directory,
         'physio',
         "Physiological Measurement",
         _get_file_matches(bids_directory, '*_physio.tsv.gz'),
         _describe_file)
-    _store_beautiful_table(df, output_directory, 'a_assay_physio.txt')
-    return df, params
+    if len(df):
+        _store_beautiful_table(
+            _drop_from_df(df, drop_parameter),
+            output_directory,
+            'a_assay_physiology.txt')
 
+    # stimulus
+    df, params = _get_assay_df(
+        bids_directory,
+        'stim',
+        "Stimulation",
+        _get_file_matches(bids_directory, '*_stim.tsv.gz'),
+        _describe_file)
+    if len(df):
+        _store_beautiful_table(
+            _drop_from_df(df, drop_parameter),
+            output_directory,
+            'a_assay_stimulation.txt')
 
     # generate: i_investigation.txt
     investigation_template = _get_investigation_template(
