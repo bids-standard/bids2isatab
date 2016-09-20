@@ -487,6 +487,15 @@ def _df_with_ontology_info(df):
     return pd.DataFrame.from_items(items)
 
 
+def _store_beautiful_table(df, output_directory, fname):
+    df = _sort_df(df)
+    df = _df_with_ontology_info(df)
+    df.to_csv(
+        opj(output_directory, fname),
+        sep="\t",
+        index=False)
+
+
 def extract(
         bids_directory,
         output_directory,
@@ -497,13 +506,10 @@ def extract(
         os.makedirs(output_directory)
 
     # generate: s_study.txt
-    study_df = _get_study_df(bids_directory)
-    study_df = _sort_df(study_df)
-    study_df = _df_with_ontology_info(study_df)
-    study_df.to_csv(
-        opj(output_directory, "s_study.txt"),
-        sep="\t",
-        index=False)
+    _store_beautiful_table(
+        _get_study_df(bids_directory),
+        output_directory,
+        "s_study.txt")
 
     # all imaging modalities recognized in BIDS
     for modality in ('T1w', 'T2w', 'T1map', 'T2map', 'FLAIR', 'FLASH', 'PD',
@@ -517,12 +523,10 @@ def extract(
                 "no files match MRI modality '{}', skipping".format(modality))
             continue
         _drop_from_df(mri_assay_df, drop_parameter)
-        mri_assay_df = _sort_df(mri_assay_df)
-        mri_assay_df = _df_with_ontology_info(mri_assay_df)
-        mri_assay_df.to_csv(
-            opj(output_directory, "a_assay_mri_{}.txt".format(modality.lower())),
-            sep="\t",
-            index=False)
+        _store_beautiful_table(
+            mri_assay_df,
+            output_directory,
+            "a_assay_mri_{}.txt".format(modality.lower()))
 
     # generate: i_investigation.txt
     investigation_template = _get_investigation_template(
