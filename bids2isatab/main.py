@@ -541,9 +541,13 @@ def _df_with_ontology_info(df):
     return pd.DataFrame.from_items(items)
 
 
-def _store_beautiful_table(df, output_directory, fname):
+def _store_beautiful_table(df, output_directory, fname, repository_info=None):
     df = _sort_df(df)
     df = _df_with_ontology_info(df)
+    if repository_info:
+        df['Comment[Data Repository]'] = repository_info[0]
+        df['Comment[Data Record Accession]'] = repository_info[1]
+        df['Comment[Data Record URI]'] = repository_info[2]
     df.to_csv(
         opj(output_directory, fname),
         sep="\t",
@@ -553,7 +557,8 @@ def _store_beautiful_table(df, output_directory, fname):
 def extract(
         bids_directory,
         output_directory,
-        drop_parameter=None):
+        drop_parameter=None,
+        repository_info=None):
     if not exists(output_directory):
         logging.info(
             "creating output directory at '{}'".format(output_directory))
@@ -580,7 +585,8 @@ def extract(
         _store_beautiful_table(
             mri_assay_df,
             output_directory,
-            "a_assay_mri_{}.txt".format(modality.lower()))
+            "a_assay_mri_{}.txt".format(modality.lower()),
+            repository_info)
 
     # physio
     df, params = _get_assay_df(
@@ -593,7 +599,8 @@ def extract(
         _store_beautiful_table(
             _drop_from_df(df, drop_parameter),
             output_directory,
-            'a_assay_physiology.txt')
+            'a_assay_physiology.txt',
+            repository_info)
 
     # stimulus
     df, params = _get_assay_df(
@@ -606,7 +613,8 @@ def extract(
         _store_beautiful_table(
             _drop_from_df(df, drop_parameter),
             output_directory,
-            'a_assay_stimulation.txt')
+            'a_assay_stimulation.txt',
+            repository_info)
 
     # generate: i_investigation.txt
     investigation_template = _get_investigation_template(
@@ -654,6 +662,12 @@ def _get_cmdline_parser():
         column 'Parameter Value[time:samples:ContentTime]', specify
         `--drop-parameter time:samples:ContentTime`. Only considered together
         with --keep-unknown.""")
+    parser.add_argument(
+        "--repository-info",
+        metavar=('NAME', 'ACCESSION#', 'URL'),
+        help="""data repository information to be used in assay tables.
+        Example: 'OpenfMRI ds000113d https://openfmri.org/dataset/ds000113d'""",
+        nargs=3)
     return parser
 
 
@@ -673,6 +687,7 @@ def main():
         args.bids_directory,
         args.output_directory,
         args.drop_parameter if args.keep_unknown else 'unknown',
+        args.repository_info
     )
     print("Metadata extraction complete.")
 
