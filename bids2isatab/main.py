@@ -390,7 +390,8 @@ def _get_assay_df(bids_directory, modality, protocol_ref, files, file_descr):
 
 
 def _get_investigation_template(bids_directory, mri_par_names):
-    this_path = opj(os.path.realpath(__file__))
+    this_path = os.path.realpath(
+        __file__[:-1] if __file__.endswith('.pyc') else __file__)
     template_path = opj(
         *(psplit(this_path)[:-1] + ("i_investigation_template.txt", )))
     investigation_template = open(template_path).read()
