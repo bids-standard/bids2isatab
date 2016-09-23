@@ -414,7 +414,7 @@ def _get_investigation_template(bids_directory, mri_par_names):
 
 def _drop_from_df(df, drop):
     if drop is None:
-        return
+        return df
     elif drop == 'unknown':
         # remove anything that isn't white-listed
         drop = [k for k in df.keys() if not k in ontology_term_map]
