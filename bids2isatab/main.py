@@ -672,9 +672,9 @@ def _get_cmdline_parser():
     return parser
 
 
-def main():
+def main(argv=None):
     parser = _get_cmdline_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # Setup logging
     if args.verbose:
@@ -695,3 +695,34 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+#
+# Make it work seamlessly as a datalad export plugin
+#
+def _datalad_export_plugin_call(
+        ds,
+        argv=None,
+        output=None,
+        drop_parameter=None,
+        repository_info=None):
+    if argv is not None:
+        # from cmdline -> go through std entrypoint
+        return main(argv + [ds.path, output])
+
+    # from Python API
+    return extract(
+        ds.path,
+        output_directory=output,
+        drop_parameter=drop_parameter,
+        repository_info=repository_info)
+
+
+def _datalad_get_cmdline_help():
+    parser = _get_cmdline_parser()
+    # return help text and info on what to replace in it to still make
+    # sense when delivered through datalad
+    return \
+        parser.format_help(), \
+        (('BIDS_DIRECTORY', 'SETBYDATALAD'),
+         ('OUTPUT_DIRECTORY', 'SETBYDATALAD'))
