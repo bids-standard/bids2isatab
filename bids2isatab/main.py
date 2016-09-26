@@ -573,7 +573,7 @@ def extract(
 
     # all imaging modalities recognized in BIDS
     for modality in ('T1w', 'T2w', 'T1map', 'T2map', 'FLAIR', 'FLASH', 'PD',
-                     'PDmap', 'PDT2', 'inplaneT1', 'inplaneT2', 'angio',
+                     'PDmap', 'PDT2', 'inplaneT1', 'inplaneT2', 'angio', 'dwi',
                      'sbref', 'bold', 'defacemask', 'SWImagandphase'):
         # generate: a_assay.txt
         mri_assay_df, mri_par_names = _get_mri_assay_df(bids_directory, modality)
