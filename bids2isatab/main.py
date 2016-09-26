@@ -390,7 +390,8 @@ def _get_assay_df(bids_directory, modality, protocol_ref, files, file_descr):
 
 
 def _get_investigation_template(bids_directory, mri_par_names):
-    this_path = opj(os.path.realpath(__file__))
+    this_path = os.path.realpath(
+        __file__[:-1] if __file__.endswith('.pyc') else __file__)
     template_path = opj(
         *(psplit(this_path)[:-1] + ("i_investigation_template.txt", )))
     investigation_template = open(template_path).read()
@@ -413,7 +414,7 @@ def _get_investigation_template(bids_directory, mri_par_names):
 
 def _drop_from_df(df, drop):
     if drop is None:
-        return
+        return df
     elif drop == 'unknown':
         # remove anything that isn't white-listed
         drop = [k for k in df.keys() if not k in ontology_term_map]
@@ -671,9 +672,9 @@ def _get_cmdline_parser():
     return parser
 
 
-def main():
+def main(argv=None):
     parser = _get_cmdline_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # Setup logging
     if args.verbose:
@@ -694,3 +695,34 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+#
+# Make it work seamlessly as a datalad export plugin
+#
+def _datalad_export_plugin_call(
+        ds,
+        argv=None,
+        output=None,
+        drop_parameter=None,
+        repository_info=None):
+    if argv is not None:
+        # from cmdline -> go through std entrypoint
+        return main(argv + [ds.path, output])
+
+    # from Python API
+    return extract(
+        ds.path,
+        output_directory=output,
+        drop_parameter=drop_parameter,
+        repository_info=repository_info)
+
+
+def _datalad_get_cmdline_help():
+    parser = _get_cmdline_parser()
+    # return help text and info on what to replace in it to still make
+    # sense when delivered through datalad
+    return \
+        parser.format_help(), \
+        (('BIDS_DIRECTORY', 'SETBYDATALAD'),
+         ('OUTPUT_DIRECTORY', 'SETBYDATALAD'))
