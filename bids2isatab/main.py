@@ -441,11 +441,11 @@ def _item_sorter_key(item):
         return 2
     elif name.startswith('Protocol REF'):
         return 3
-    elif name == 'Assay Name':
-        return 4
     elif name.startswith('Parameter Value['):
-        return 5
+        return 4
     elif name == 'Raw Data File':
+        return 5
+    elif name == 'Assay Name':
         return 6
     elif name.startswith('Comment['):
         return 10
@@ -592,7 +592,7 @@ def extract(
     df, params = _get_assay_df(
         bids_directory,
         'physio',
-        "Physiological Measurement",
+        "Physiological recordings",
         _get_file_matches(bids_directory, '*_physio.tsv.gz'),
         _describe_file)
     if len(df):
