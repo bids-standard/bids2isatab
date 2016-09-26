@@ -585,7 +585,7 @@ def extract(
         _store_beautiful_table(
             mri_assay_df,
             output_directory,
-            "a_assay_mri_{}.txt".format(modality.lower()),
+            "a_mri_{}.txt".format(modality.lower()),
             repository_info)
 
     # physio
@@ -599,7 +599,7 @@ def extract(
         _store_beautiful_table(
             _drop_from_df(df, drop_parameter),
             output_directory,
-            'a_assay_physiology.txt',
+            'a_physiology.txt',
             repository_info)
 
     # stimulus
@@ -613,7 +613,7 @@ def extract(
         _store_beautiful_table(
             _drop_from_df(df, drop_parameter),
             output_directory,
-            'a_assay_stimulation.txt',
+            'a_stimulation.txt',
             repository_info)
 
     # generate: i_investigation.txt
