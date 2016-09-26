@@ -23,7 +23,7 @@ import pandas as pd
 ontology_term_map = {
     # qualitative information
     "Characteristics[organism]": {
-        'homo sapiens': ('homo sapiens', 'NCBITAXON', 'NCBITaxon:9606'),
+        'homo sapiens': ('Homo sapiens', 'NCBITAXON', 'NCBITaxon:9606'),
     },
     "Characteristics[organism part]": {
         'brain': ('brain', 'UBERON', 'UBERON:0000955'),
